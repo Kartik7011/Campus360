@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import {
-  BarChart3,
   BellRing,
   BriefcaseBusiness,
   ChevronRight,
@@ -90,7 +89,7 @@ export function AppShell({ student, activeView, onNavigate, onLogout, children }
           </div>
         </div>
 
-        <nav className="flex-1 px-3" aria-label="Main navigation">
+        <nav className="scrollbar-thin flex-1 overflow-y-auto px-3" aria-label="Main navigation">
           <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Workspace</p>
           <div className="space-y-1">
             {mainNav.map((item) => {
@@ -134,6 +133,25 @@ export function AppShell({ student, activeView, onNavigate, onLogout, children }
         </div>
       </aside>
 
+      <nav className="fixed inset-x-3 bottom-3 z-30 flex items-stretch justify-around rounded-2xl border border-slate-200 bg-white/95 p-1.5 shadow-soft backdrop-blur-xl lg:hidden" aria-label="Mobile navigation">
+        {mainNav.map((item) => {
+          const Icon = item.icon
+          const active = activeView === item.key
+          return (
+            <button
+              key={item.key}
+              onClick={() => navigate(item.key)}
+              aria-current={active ? 'page' : undefined}
+              aria-label={item.label}
+              className={`flex min-h-[56px] min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1.5 text-[10px] font-bold transition ${active ? 'bg-indigo-50 text-indigo-700' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-700'}`}
+            >
+              <Icon size={18} strokeWidth={active ? 2.4 : 1.8} />
+              <span className="max-w-full truncate">{item.shortLabel}</span>
+            </button>
+          )
+        })}
+      </nav>
+
       {mobileOpen && <button className="fixed inset-0 z-30 bg-slate-950/50 lg:hidden" onClick={() => setMobileOpen(false)} aria-label="Close navigation overlay" />}
 
       <main className="min-h-screen lg:pl-[270px]">
@@ -143,12 +161,12 @@ export function AppShell({ student, activeView, onNavigate, onLogout, children }
               <button className="rounded-xl bg-white p-2 text-slate-600 shadow-sm ring-1 ring-slate-200 lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Open navigation"><Menu size={19} /></button>
               <div>
                 <p className="hidden text-xs font-semibold uppercase tracking-[0.15em] text-slate-400 sm:block">Campus360 workspace</p>
-                <h1 className="font-display text-lg font-bold tracking-tight text-slate-950 sm:text-xl">{viewLabels[activeView]}</h1>
+                <h1 className="max-w-[190px] truncate font-display text-lg font-bold tracking-tight text-slate-950 sm:max-w-none sm:text-xl">{viewLabels[activeView]}</h1>
               </div>
             </div>
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="hidden items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-semibold text-slate-500 shadow-sm ring-1 ring-slate-200 sm:flex"><span className="h-2 w-2 rounded-full bg-emerald-500" />Demo data synced</div>
-              <button onClick={() => navigate('admin')} className="flex items-center gap-2 rounded-full bg-white py-1.5 pl-1.5 pr-3 text-left shadow-sm ring-1 ring-slate-200 transition hover:ring-indigo-300">
+              <button onClick={() => navigate('admin')} aria-label="Open admin demo panel" className="flex items-center gap-2 rounded-full bg-white py-1.5 pl-1.5 pr-3 text-left shadow-sm ring-1 ring-slate-200 transition hover:ring-indigo-300">
                 <InitialsAvatar initials={student.initials} size="sm" />
                 <span className="hidden text-xs font-semibold text-slate-700 sm:block">{student.name.split(' ')[0]}</span>
                 <ChevronRight size={14} className="text-slate-400" />
@@ -156,7 +174,7 @@ export function AppShell({ student, activeView, onNavigate, onLogout, children }
             </div>
           </div>
         </header>
-        <div className="px-4 pb-12 pt-6 sm:px-6 lg:px-8 lg:pt-8">{children}</div>
+        <div className="px-4 pb-28 pt-6 sm:px-6 lg:px-8 lg:pb-12 lg:pt-8">{children}</div>
       </main>
     </div>
   )
