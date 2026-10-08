@@ -4,14 +4,14 @@ import { InitialsAvatar } from './ui'
 
 export function LoginScreen({ students, onLogin }: { students: Student[]; onLogin: (id: string) => void }) {
   return (
-    <div className="min-h-screen overflow-hidden bg-ink text-white">
+    <div className="min-h-screen w-full overflow-x-hidden bg-ink text-white">
       <div className="absolute inset-0 campus-grid opacity-20" />
       <div className="absolute -right-24 -top-32 h-96 w-96 rounded-full bg-violet-500/20 blur-3xl" />
       <div className="absolute -bottom-40 left-1/3 h-96 w-96 rounded-full bg-teal-400/10 blur-3xl" />
-      <div className="relative mx-auto flex min-h-screen max-w-7xl items-center px-5 py-8 sm:px-8 lg:px-12">
-        <div className="grid w-full gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
-          <section className="max-w-xl">
-            <div className="mb-10 flex items-center gap-3">
+      <div className="relative mx-auto flex min-h-screen w-full max-w-7xl items-start px-4 py-6 sm:items-center sm:px-8 sm:py-8 lg:px-12">
+        <div className="grid w-full min-w-0 grid-cols-1 gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-12">
+          <section className="min-w-0 w-full max-w-xl">
+            <div className="mb-7 flex items-center gap-3 sm:mb-10">
               <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/15">
                 <div className="absolute h-6 w-6 rounded-full border-[3px] border-teal-300 border-r-transparent" />
                 <div className="h-1.5 w-1.5 rounded-full bg-amber-300" />
@@ -19,9 +19,9 @@ export function LoginScreen({ students, onLogin }: { students: Student[]; onLogi
               <div><p className="font-display text-lg font-bold">Campus<span className="text-teal-300">360</span></p><p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Student transparency platform</p></div>
             </div>
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-teal-300/20 bg-teal-300/10 px-3 py-1.5 text-xs font-semibold text-teal-200"><Sparkles size={14} /> Capstone-I MTE demo</div>
-            <h1 className="font-display text-4xl font-bold leading-[1.08] tracking-[-0.04em] text-white sm:text-6xl">Know where you stand.<br /><span className="text-gradient">Choose what’s next.</span></h1>
-            <p className="mt-6 max-w-lg text-base leading-7 text-slate-300 sm:text-lg">A single student view for academic records, placement rules, important notices, and practical resume improvement.</p>
-            <div className="mt-9 grid max-w-lg gap-3 sm:grid-cols-3">
+            <h1 className="font-display text-3xl font-bold leading-[1.08] tracking-[-0.04em] text-white sm:text-6xl">Know where you stand.<br /><span className="text-gradient">Choose what’s next.</span></h1>
+            <p className="mt-4 max-w-lg text-sm leading-6 text-slate-300 sm:mt-6 sm:text-lg sm:leading-7">A single student view for academic records, placement rules, important notices, and practical resume improvement.</p>
+            <div className="mt-6 hidden max-w-lg gap-3 sm:grid sm:grid-cols-3 sm:mt-9">
               {[
                 { icon: BookOpenCheck, label: 'Academic clarity' },
                 { icon: BriefcaseBusiness, label: 'Placement transparency' },
@@ -30,7 +30,7 @@ export function LoginScreen({ students, onLogin }: { students: Student[]; onLogi
             </div>
           </section>
 
-          <section className="rounded-[28px] border border-white/10 bg-white p-5 text-slate-900 shadow-2xl shadow-slate-950/30 sm:p-7">
+          <section className="min-w-0 w-full rounded-[24px] border border-white/10 bg-white p-4 text-slate-900 shadow-2xl shadow-slate-950/30 sm:rounded-[28px] sm:p-7">
             <div className="mb-7 flex items-start justify-between gap-4">
               <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-500">Demo access</p><h2 className="mt-2 font-display text-2xl font-bold tracking-tight text-slate-950">Choose a student profile</h2><p className="mt-1 text-sm leading-6 text-slate-500">No password needed for this MTE walkthrough.</p></div>
               <div className="rounded-2xl bg-emerald-50 p-2.5 text-emerald-600"><CheckCircle2 size={20} /></div>
