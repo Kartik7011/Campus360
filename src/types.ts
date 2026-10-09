@@ -1,22 +1,10 @@
-export type ViewKey =
-  | 'dashboard'
-  | 'academic'
-  | 'notices'
-  | 'placements'
-  | 'resume'
-  | 'admin'
+export type ViewKey = 'dashboard' | 'academic' | 'notices' | 'placements' | 'resume' | 'admin'
 
 export type NoticeCategory = 'Academic' | 'Placement' | 'Rechecking'
 export type Priority = 'High' | 'Medium' | 'Low'
 export type EligibilityStatus = 'Eligible' | 'Not Eligible' | 'Cannot Determine'
 export type RuleStatus = 'Pass' | 'Fail' | 'Unknown'
-export type PlacementStage =
-  | 'Applied'
-  | 'Aptitude'
-  | 'Technical'
-  | 'HR'
-  | 'Selected'
-  | 'Rejected'
+export type PlacementStage = 'Applied' | 'Aptitude' | 'Technical' | 'HR' | 'Selected' | 'Rejected'
 
 export interface Student {
   id: string
@@ -29,6 +17,7 @@ export interface Student {
   program: string
   cgpa: number | null
   activeBacklogs: number | null
+  backlogSubjects?: string[]
   debarred: boolean | null
   graduationYear: number | null
   attendance: number
@@ -152,7 +141,9 @@ export interface ResumeAnalysis {
   suggestions: string[]
 }
 
-export interface DemoData {
+export interface AppData {
+  // bump in data.ts whenever the sample data changes; saved data with another version is discarded
+  version: number
   students: Student[]
   mentor: Mentor
   notices: Notice[]

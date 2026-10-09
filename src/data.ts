@@ -1,18 +1,20 @@
-import type { DemoData } from './types'
+import type { AppData } from './types'
 
-export const seedData: DemoData = {
+export const seedData: AppData = {
+  version: 3,
   students: [
     {
       id: 'kartik',
       name: 'Kartik Chauhan',
       initials: 'KC',
-      email: 'kartik.chauhan@campus360.demo',
+      email: 'kartik.chauhan@galgotiasuniversity.ac.in',
       phone: '+91 98765 40182',
       semester: 7,
       branch: 'Computer Science & Engineering',
       program: 'B.Tech',
-      cgpa: 8.42,
-      activeBacklogs: 1,
+      cgpa: 7.76,
+      activeBacklogs: 0,
+      backlogSubjects: [],
       debarred: false,
       graduationYear: 2027,
       attendance: 86,
@@ -25,29 +27,31 @@ export const seedData: DemoData = {
       id: 'shreyansh',
       name: 'Shreyansh Pandey',
       initials: 'SP',
-      email: 'shreyansh.pandey@campus360.demo',
+      email: 'shreyansh.pandey@galgotiasuniversity.ac.in',
       phone: '+91 98765 77826',
       semester: 7,
       branch: 'Electronics & Communication Engineering',
       program: 'B.Tech',
-      cgpa: 7.86,
-      activeBacklogs: 0,
+      cgpa: 7.2,
+      activeBacklogs: 1,
+      backlogSubjects: ['EM2'],
       debarred: false,
       graduationYear: 2027,
       attendance: 91,
       creditsCompleted: 132,
       totalCredits: 160,
       skills: ['Python', 'Embedded C', 'IoT', 'MATLAB', 'Data Analysis'],
-      profileNote: 'Exploring embedded systems, applied data work, and the connection between hardware and software.',
+      profileNote:
+        'Exploring embedded systems, applied data work, and the connection between hardware and software.',
     },
   ],
   mentor: {
-    id: 'mentor-meera',
-    name: 'Dr. Meera Nair',
-    initials: 'MN',
+    id: 'mentor-avinash',
+    name: 'Dr. Avinash Dwivedi',
+    initials: 'AD',
     department: 'Department of Computer Science & Engineering',
-    email: 'meera.nair@campus360.demo',
-    phone: '+91 98765 11042',
+    email: 'kartikchauhan0206@gmail.com',
+    phone: '+91 70117 56999',
     officeHours: 'Tue & Thu · 2:00–4:00 PM',
     availability: 'Available this week',
     focus: 'Academic planning, rechecking support, and placement readiness',
@@ -79,7 +83,8 @@ export const seedData: DemoData = {
       id: 'notice-3',
       title: 'Rechecking applications — September results',
       category: 'Rechecking',
-      summary: 'Students can submit rechecking requests through the examination portal for four working days.',
+      summary:
+        'Students can submit rechecking requests through the examination portal for four working days.',
       date: '2026-10-06',
       deadline: '2026-10-11',
       priority: 'High',
@@ -150,7 +155,7 @@ export const seedData: DemoData = {
       location: 'Bengaluru · India',
       website: 'technova.example',
       description: 'Builds developer tools and workflow software for fast-moving teams.',
-      accent: '#7167f8',
+      accent: '#4b5a8c',
     },
     {
       id: 'orbit',
@@ -160,7 +165,7 @@ export const seedData: DemoData = {
       location: 'Pune · Hybrid',
       website: 'orbitlabs.example',
       description: 'A cloud data platform helping operations teams turn messy signals into decisions.',
-      accent: '#13b8b0',
+      accent: '#2e6b66',
     },
     {
       id: 'northstar',
@@ -170,7 +175,7 @@ export const seedData: DemoData = {
       location: 'Mumbai · India',
       website: 'northstar.example',
       description: 'A digital finance company focused on transparent, accessible financial products.',
-      accent: '#e59b3f',
+      accent: '#94551d',
     },
   ],
   opportunities: [
@@ -203,7 +208,11 @@ export const seedData: DemoData = {
       deadline: '2026-10-22',
       posted: '2026-10-06',
       minCgpa: 7.5,
-      allowedBranches: ['Computer Science & Engineering', 'Information Technology', 'Electronics & Communication Engineering'],
+      allowedBranches: [
+        'Computer Science & Engineering',
+        'Information Technology',
+        'Electronics & Communication Engineering',
+      ],
       maxActiveBacklogs: 1,
       graduationYears: [2027, 2028],
       requiredSkills: ['Python', 'SQL'],
@@ -223,7 +232,12 @@ export const seedData: DemoData = {
       deadline: '2026-10-10',
       posted: '2026-10-01',
       minCgpa: 7.8,
-      allowedBranches: ['Computer Science & Engineering', 'Information Technology', 'Electronics & Communication Engineering', 'Electrical Engineering'],
+      allowedBranches: [
+        'Computer Science & Engineering',
+        'Information Technology',
+        'Electronics & Communication Engineering',
+        'Electrical Engineering',
+      ],
       maxActiveBacklogs: 0,
       graduationYears: [2027],
       requiredSkills: ['SQL', 'Data Analysis', 'Communication'],
@@ -269,19 +283,19 @@ export const seedData: DemoData = {
       updatedAt: '2026-10-07',
       text: `Kartik Chauhan
 Computer Science & Engineering | B.Tech | 2027
-kartik.chauhan@campus360.demo | github.com/kartik-demo
+kartik.chauhan@galgotiasuniversity.ac.in | github.com/Kartik7011
 
 SUMMARY
 Product-minded frontend developer who builds accessible student tools and data-rich web experiences.
 
 EDUCATION
-B.Tech Computer Science & Engineering, 8.42 CGPA, graduating 2027
+B.Tech Computer Science & Engineering, 7.76 CGPA, graduating 2027
 
 SKILLS
 React, TypeScript, JavaScript, HTML/CSS, Node.js, SQL, Git
 
 PROJECTS
-Campus360 — Built a React and TypeScript dashboard that surfaces academic status, placement eligibility, and resume feedback for students. Added responsive design and local demo persistence.
+Campus360 — Built a React and TypeScript dashboard that surfaces academic status, placement eligibility, and resume feedback for students. Added responsive design and local persistence.
 StudySprint — Created a Node.js and SQL study planner with reminders and progress reporting.
 
 EXPERIENCE
@@ -296,7 +310,7 @@ Finalist in a university product hackathon; mentored two juniors during the web 
       name: 'Kartik · Analytics-focused resume',
       updatedAt: '2026-10-02',
       text: `Kartik Chauhan
-B.Tech Computer Science & Engineering · 2027 · 8.42 CGPA
+B.Tech Computer Science & Engineering · 2027 · 7.76 CGPA
 
 EDUCATION
 Bachelor of Technology, Computer Science & Engineering
@@ -320,7 +334,7 @@ Presented findings to a panel of four faculty members and reduced manual report 
       name: 'Shreyansh · Embedded systems resume',
       updatedAt: '2026-10-05',
       text: `Shreyansh Pandey
-Electronics & Communication Engineering · 2027 · 7.86 CGPA
+Electronics & Communication Engineering · 2027 · 7.20 CGPA
 
 EDUCATION
 B.Tech Electronics & Communication Engineering

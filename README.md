@@ -1,78 +1,74 @@
-# Campus360 — Capstone-I MTE MVP
+# Campus360
 
-Campus360 is a student-centric academic and career transparency dashboard for the Capstone-I MTE. It brings a student’s academic snapshot, mentor contact, notices, rechecking requests, placement rules, application stages, and resume-to-role feedback into one focused demo flow.
+Campus360 is a student portal that puts academic status and placement readiness in one place. A student can see their CGPA, backlogs and mentor, follow notices and rechecking requests, check whether they meet each company's criteria (and why), track their application rounds, and get feedback on how well their resume matches a job description.
 
-This MVP is intentionally local-first. It uses seeded TypeScript data and browser `localStorage` so the demo works without a backend, database, or external AI API. The data layer is isolated in `src/data.ts` and the rule/checker logic is isolated in `src/utils.ts`, making it straightforward to replace with an API later.
+## Features
 
-## Run locally
+- **Overview dashboard** – CGPA, semester, active backlogs, debarment status, upcoming deadlines, mentor and application summary.
+- **Academic record** – academic standing, credits, mentor contact and a rechecking request tracker.
+- **Notices & deadlines** – search, category filters, priority toggle and time-left labels.
+- **Placement hub** – openings with a rule-by-rule eligibility check (CGPA, branch, active backlogs, graduation year, debarment). Each rule is Pass, Fail or Unknown; missing data is never treated as a pass.
+- **Application tracker** – Applied → Aptitude → Technical → HR → Selected.
+- **Resume checker** – compares a resume with one job description across seven weighted categories and lists strengths, gaps and suggested edits. It is guidance only, not a hiring prediction or an eligibility decision.
+- **Admin panel** (admin sign-in only) – edit student records, publish or remove notices, add openings and update application stages.
 
-Requirements: Node.js 18+ and npm.
+## Sample accounts
+
+| Role | Email | Password |
+|---|---|---|
+| Student | kartik.chauhan@galgotiasuniversity.ac.in | Kartik@360 |
+| Student | shreyansh.pandey@galgotiasuniversity.ac.in | Shreyansh@360 |
+| Admin (use the **Admin** tab) | admin@galgotiasuniversity.ac.in | Admin@360 |
+
+Students see their own dashboard, academic record, notices, placements and resume checker. The admin sees only the admin panel.
+
+## Tech stack
+
+React 18, TypeScript, Vite, Tailwind CSS, lucide-react icons, Vitest.
+
+## Getting started
+
+Requires Node.js 18+.
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open the local URL printed by Vite (normally `http://localhost:5173`).
+Open the URL printed by Vite (usually `http://localhost:5173`).
 
-### Windows PowerShell note
+On Windows, if PowerShell blocks `npm` scripts, use `npm.cmd install` and `npm.cmd run dev`.
 
-If PowerShell shows `npm.ps1 cannot be loaded because running scripts is disabled`, use the Windows command shim instead:
-
-```powershell
-npm.cmd install
-npm.cmd run dev
-```
-
-This avoids changing the machine-wide execution policy. A temporary alternative for the current PowerShell window is `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`.
-
-Useful verification commands:
-
-```bash
-npm test       # deterministic eligibility and resume-checker tests
-npm run build  # TypeScript check + production Vite build
-npm run preview # serve the production build locally after `npm run build`
-```
-
-## Demo access
-
-The login screen has two passwordless demo profiles:
-
-- **Kartik Chauhan** — Computer Science & Engineering, Semester 7, CGPA 8.42, one active backlog.
-- **Shreyansh Pandey** — Electronics & Communication Engineering, Semester 7, CGPA 7.86, no active backlogs.
-
-Choose either profile to enter. There is no real authentication in this MTE build; the flow is a clearly labelled demo authentication experience.
-
-## Suggested 5–7 minute demo script
-
-1. Log in as **Kartik Chauhan** and start on **Overview**. Point out the CGPA, semester, backlog, debarment, high-priority notices, mentor contact, and application snapshot.
-2. Open **Academic record**. Show the academic fields, credits progress, mentor availability, and the two rechecking requests with request date, status, remarks, and expected resolution date.
-3. Open **Notices & deadlines**. Filter by Placement or Rechecking and toggle High priority. Show that every notice has a source, audience, priority, and deadline/time-left label.
-4. Open **Placement hub**. Expand each opportunity’s “Show rule explanation” section. Explain the difference between **Eligible**, **Not Eligible**, and **Cannot Determine** and show the individual CGPA, branch, backlog, graduation-year, and debarment rules.
-5. Scroll to **Placement stage tracker** and show the Applied → Aptitude → Technical → HR → Selected pipeline.
-6. Open **Resume checker**, choose a company/role, select one of the sample resumes, and click **Run match check**. Show the score, seven-category breakdown, strengths, weak areas, and suggestions. Emphasize the scope note: it is resume-to-job-description alignment only, not a hiring prediction or official eligibility decision.
-7. Open **Admin demo panel**. Edit a student record, add a notice, add an opportunity, or move an application stage. Navigate back to the student views to show that local changes are reflected.
+| Command | What it does |
+|---|---|
+| `npm run dev` | Start the dev server |
+| `npm test` | Run unit tests (eligibility rules, resume analysis) |
+| `npm run build` | Type-check and build for production |
+| `npm run preview` | Serve the production build |
 
 ## Project structure
 
 ```text
 src/
-  components/       App shell, login, shared UI primitives
-  pages/            Dashboard, academic, notices, placements, resume, admin views
-  data.ts           Seed users, notices, companies, opportunities, requests, resumes
-  types.ts          Shared domain types
-  utils.ts          Eligibility engine, date helpers, deterministic resume analysis
-  App.tsx           Local state, persistence, view routing, mutation callbacks
+  components/   App shell, sign-in screen, shared UI
+  pages/        Dashboard, academic, notices, placements, resume checker, admin
+  data.ts       Sample records the app starts with
+  types.ts      Shared types
+  utils.ts      Eligibility rules, resume analysis, date helpers
+  App.tsx       App state, persistence and navigation
 ```
 
-## MTE scope and honest boundaries
+Eligibility and resume analysis are pure functions in `src/utils.ts`, so they can be tested on their own and moved behind an API later without changing behaviour.
 
-- Student authentication is a passwordless demo selector, not production identity management.
-- Data is stored in `localStorage` for the current browser. Clear the site’s local storage to reset to the seed data.
-- Placement eligibility is a rule-based explanation layer. It never makes an official college or company decision.
-- Resume scoring is deterministic and works without an external provider. It compares the submitted text with the selected role’s job description and required/preferred skills; it is not a hiring prediction.
-- The admin panel is a local demo control surface. It is not connected to a real SIS, examination portal, or placement portal.
+## Current limitations
 
-## After MTE
+- Data is stored in the browser (`localStorage`). The app ships with sample students, companies and notices. To reset, clear the site data.
+- Sign-in is checked in the browser against the sample accounts in `src/auth.ts`. It separates student and admin views but is not real security; it needs a server before real data is used.
+- The resume checker uses exact keyword and section matching on plain text (paste or `.txt`). PDF/DOCX import is not supported yet.
 
-The next practical additions would be a real authentication/API boundary, role-based admin permissions, a PostgreSQL/Supabase schema for students and notices, audit history for record edits, file storage plus PDF/DOCX text extraction, official placement-cell integrations, and an optional AI provider behind an environment variable with clear privacy controls.
+## Roadmap
+
+- Backend API and database
+- Server-side authentication (hashed passwords, sessions) and an audit log for admin edits
+- Rechecking request submission
+- PDF/DOCX resume import and better skill matching (synonyms and related terms)

@@ -1,15 +1,25 @@
 import { analyzeResume, evaluateEligibility } from './utils'
 import { seedData } from './data'
 
-describe('Campus360 demo rules', () => {
+describe('eligibility and resume analysis', () => {
   it('returns a transparent not eligible result when a published rule fails', () => {
     const student = seedData.students[0]
     const opportunity = seedData.opportunities.find((item) => item.id === 'opp-technova-frontend')!
     const result = evaluateEligibility(student, opportunity)
 
     expect(result.status).toBe('Not Eligible')
-    expect(result.rules.find((rule) => rule.label === 'Active backlogs')?.status).toBe('Fail')
+    expect(result.rules.find((rule) => rule.label === 'CGPA')?.status).toBe('Fail')
+    expect(result.rules.find((rule) => rule.label === 'Active backlogs')?.status).toBe('Pass')
     expect(result.rules).toHaveLength(5)
+  })
+
+  it('fails the backlog rule when a student has more active backlogs than allowed', () => {
+    const student = seedData.students.find((item) => item.id === 'shreyansh')!
+    const opportunity = seedData.opportunities.find((item) => item.id === 'opp-northstar-analyst')!
+    const result = evaluateEligibility(student, opportunity)
+
+    expect(result.status).toBe('Not Eligible')
+    expect(result.rules.find((rule) => rule.label === 'Active backlogs')?.status).toBe('Fail')
   })
 
   it('returns a deterministic resume match with category explanations', () => {

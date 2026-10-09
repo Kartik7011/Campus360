@@ -8,10 +8,7 @@ import type {
   Student,
 } from './types'
 
-export function getCompanyByOpportunity(
-  opportunity: Opportunity,
-  companies: Company[],
-) {
+export function getCompanyByOpportunity(opportunity: Opportunity, companies: Company[]) {
   return companies.find((company) => company.id === opportunity.companyId)
 }
 
@@ -57,7 +54,10 @@ export function evaluateEligibility(student: Student, opportunity: Opportunity):
   if (student.cgpa === null || opportunity.minCgpa === null) {
     rules.push({
       label: 'CGPA',
-      requirement: opportunity.minCgpa === null ? 'Requirement not published' : `At least ${opportunity.minCgpa.toFixed(2)}`,
+      requirement:
+        opportunity.minCgpa === null
+          ? 'Requirement not published'
+          : `At least ${opportunity.minCgpa.toFixed(2)}`,
       actual: display(student.cgpa),
       status: opportunity.minCgpa === null ? 'Unknown' : 'Unknown',
       detail: 'The official record or company threshold is missing, so this rule cannot be confirmed.',
@@ -69,33 +69,44 @@ export function evaluateEligibility(student: Student, opportunity: Opportunity):
       requirement: `At least ${opportunity.minCgpa.toFixed(2)}`,
       actual: student.cgpa.toFixed(2),
       status: passes ? 'Pass' : 'Fail',
-      detail: passes ? 'Your recorded CGPA meets the published threshold.' : 'Your recorded CGPA is below the published threshold.',
+      detail: passes
+        ? 'Your recorded CGPA meets the published threshold.'
+        : 'Your recorded CGPA is below the published threshold.',
     })
   }
 
   if (!student.branch || opportunity.allowedBranches.length === 0) {
     rules.push({
       label: 'Branch',
-      requirement: opportunity.allowedBranches.length ? opportunity.allowedBranches.join(', ') : 'Requirement not published',
+      requirement: opportunity.allowedBranches.length
+        ? opportunity.allowedBranches.join(', ')
+        : 'Requirement not published',
       actual: display(student.branch),
       status: 'Unknown',
       detail: 'Branch data or the company branch list is incomplete.',
     })
   } else {
-    const passes = opportunity.allowedBranches.some((branch) => branch.toLowerCase() === student.branch.toLowerCase())
+    const passes = opportunity.allowedBranches.some(
+      (branch) => branch.toLowerCase() === student.branch.toLowerCase(),
+    )
     rules.push({
       label: 'Branch',
       requirement: opportunity.allowedBranches.join(', '),
       actual: student.branch,
       status: passes ? 'Pass' : 'Fail',
-      detail: passes ? 'Your branch is listed in the opportunity criteria.' : 'Your branch is not listed in the opportunity criteria.',
+      detail: passes
+        ? 'Your branch is listed in the opportunity criteria.'
+        : 'Your branch is not listed in the opportunity criteria.',
     })
   }
 
   if (student.activeBacklogs === null || opportunity.maxActiveBacklogs === null) {
     rules.push({
       label: 'Active backlogs',
-      requirement: opportunity.maxActiveBacklogs === null ? 'Requirement not published' : `At most ${opportunity.maxActiveBacklogs}`,
+      requirement:
+        opportunity.maxActiveBacklogs === null
+          ? 'Requirement not published'
+          : `At most ${opportunity.maxActiveBacklogs}`,
       actual: display(student.activeBacklogs),
       status: 'Unknown',
       detail: 'The official backlog record or company limit is missing.',
@@ -107,19 +118,28 @@ export function evaluateEligibility(student: Student, opportunity: Opportunity):
       requirement: `At most ${opportunity.maxActiveBacklogs}`,
       actual: String(student.activeBacklogs),
       status: passes ? 'Pass' : 'Fail',
-      detail: passes ? 'Your active backlog count is within the published limit.' : 'Your active backlog count is above the published limit.',
+      detail: passes
+        ? 'Your active backlog count is within the published limit.'
+        : 'Your active backlog count is above the published limit.',
     })
   }
 
-  if (!opportunity.graduationYears || opportunity.graduationYears.length === 0 || student.graduationYear === null) {
+  if (
+    !opportunity.graduationYears ||
+    opportunity.graduationYears.length === 0 ||
+    student.graduationYear === null
+  ) {
     rules.push({
       label: 'Graduation year',
-      requirement: opportunity.graduationYears?.length ? opportunity.graduationYears.join(', ') : 'Not specified',
+      requirement: opportunity.graduationYears?.length
+        ? opportunity.graduationYears.join(', ')
+        : 'Not specified',
       actual: display(student.graduationYear),
       status: opportunity.graduationYears?.length && student.graduationYear === null ? 'Unknown' : 'Pass',
-      detail: opportunity.graduationYears?.length && student.graduationYear === null
-        ? 'Graduation year is missing from the student record.'
-        : 'No graduation-year restriction was published for this opening.',
+      detail:
+        opportunity.graduationYears?.length && student.graduationYear === null
+          ? 'Graduation year is missing from the student record.'
+          : 'No graduation-year restriction was published for this opening.',
     })
   } else {
     const passes = opportunity.graduationYears.includes(student.graduationYear)
@@ -128,7 +148,9 @@ export function evaluateEligibility(student: Student, opportunity: Opportunity):
       requirement: opportunity.graduationYears.join(', '),
       actual: String(student.graduationYear),
       status: passes ? 'Pass' : 'Fail',
-      detail: passes ? 'Your graduation year is included in the company criteria.' : 'Your graduation year is outside the company criteria.',
+      detail: passes
+        ? 'Your graduation year is included in the company criteria.'
+        : 'Your graduation year is outside the company criteria.',
     })
   }
 
@@ -165,7 +187,7 @@ export function evaluateEligibility(student: Student, opportunity: Opportunity):
     ? 'At least one published rule is not satisfied. Review the failed rules below.'
     : hasUnknown
       ? 'Some required student or company data is missing. This is not an official eligibility decision.'
-      : 'Every published rule matches the current demo record. Confirm with the placement cell before applying.'
+      : 'Every published rule matches your current record. Confirm with the placement cell before applying.'
 
   return { status, rules, summary }
 }
@@ -191,7 +213,11 @@ function categoryNote(score: number, strong: string, improve: string) {
   return improve
 }
 
-export function analyzeResume(resumeText: string, opportunity: Opportunity, student: Student): ResumeAnalysis {
+export function analyzeResume(
+  resumeText: string,
+  opportunity: Opportunity,
+  student: Student,
+): ResumeAnalysis {
   const text = normalized(resumeText)
   const required = opportunity.requiredSkills
   const preferred = opportunity.preferredSkills
@@ -208,66 +234,134 @@ export function analyzeResume(resumeText: string, opportunity: Opportunity, stud
     opportunity.title,
     ...required,
     ...preferred,
-    ...opportunity.jobDescription.split(/\s+/).filter((word) => word.length > 6).slice(0, 8),
+    ...opportunity.jobDescription
+      .split(/\s+/)
+      .filter((word) => word.length > 6)
+      .slice(0, 8),
   ]
-  const keywordHits = keywordTerms.filter((term, index, all) => all.findIndex((candidate) => candidate === term) === index && hasTerm(text, term)).length
+  const keywordHits = keywordTerms.filter(
+    (term, index, all) => all.findIndex((candidate) => candidate === term) === index && hasTerm(text, term),
+  ).length
   const keywordScore = safePercent(keywordHits, Math.min(new Set(keywordTerms).size, 12), 0)
 
-  const educationSignals = [student.branch, student.program, String(student.graduationYear ?? ''), 'education']
-  const educationScore = safePercent(educationSignals.filter((signal) => hasTerm(text, signal)).length, educationSignals.length, 0)
+  const educationSignals = [
+    student.branch,
+    student.program,
+    String(student.graduationYear ?? ''),
+    'education',
+  ]
+  const educationScore = safePercent(
+    educationSignals.filter((signal) => hasTerm(text, signal)).length,
+    educationSignals.length,
+    0,
+  )
 
   const structureSignals = ['summary', 'education', 'skills', 'projects', 'experience', 'achievements']
-  const structureScore = safePercent(structureSignals.filter((signal) => hasTerm(text, signal)).length, structureSignals.length, 0)
+  const structureScore = safePercent(
+    structureSignals.filter((signal) => hasTerm(text, signal)).length,
+    structureSignals.length,
+    0,
+  )
 
   const lineCount = resumeText.split(/\r?\n/).filter((line) => line.trim()).length
   const longLineCount = resumeText.split(/\r?\n/).filter((line) => line.length > 140).length
-  const atsScore = Math.max(0, Math.min(100, 70 + (lineCount >= 18 ? 15 : 0) - longLineCount * 10 - (resumeText.includes('|') ? 5 : 0)))
+  const atsScore = Math.max(
+    0,
+    Math.min(100, 70 + (lineCount >= 18 ? 15 : 0) - longLineCount * 10 - (resumeText.includes('|') ? 5 : 0)),
+  )
 
-  const achievementSignals = ['achieved', 'built', 'created', 'reduced', 'won', 'finalist', 'mentored', 'improved', '%', 'second place']
-  const achievementScore = Math.max(20, Math.min(100, 35 + achievementSignals.filter((signal) => hasTerm(text, signal)).length * 8 + (/[0-9]/.test(resumeText) ? 12 : 0)))
+  const achievementSignals = [
+    'achieved',
+    'built',
+    'created',
+    'reduced',
+    'won',
+    'finalist',
+    'mentored',
+    'improved',
+    '%',
+    'second place',
+  ]
+  const achievementScore = Math.max(
+    20,
+    Math.min(
+      100,
+      35 +
+        achievementSignals.filter((signal) => hasTerm(text, signal)).length * 8 +
+        (/[0-9]/.test(resumeText) ? 12 : 0),
+    ),
+  )
 
   const categories: ResumeCategory[] = [
     {
       key: 'required',
       label: 'Required skills match',
       score: requiredScore,
-      note: categoryNote(requiredScore, 'Most required skills are evidenced in the resume.', 'Add clear evidence for the role’s required skills.'),
+      note: categoryNote(
+        requiredScore,
+        'Most required skills are evidenced in the resume.',
+        'Add clear evidence for the role’s required skills.',
+      ),
     },
     {
       key: 'projects',
       label: 'Project relevance',
       score: projectScore,
-      note: categoryNote(projectScore, 'Projects connect well with the selected role.', 'Make project outcomes and role-specific tools easier to find.'),
+      note: categoryNote(
+        projectScore,
+        'Projects connect well with the selected role.',
+        'Make project outcomes and role-specific tools easier to find.',
+      ),
     },
     {
       key: 'keywords',
       label: 'Keyword match',
       score: keywordScore,
-      note: categoryNote(keywordScore, 'The resume uses language aligned with the job description.', 'Mirror important job-description terms where they truthfully apply.'),
+      note: categoryNote(
+        keywordScore,
+        'The resume uses language aligned with the job description.',
+        'Mirror important job-description terms where they truthfully apply.',
+      ),
     },
     {
       key: 'education',
       label: 'Education alignment',
       score: educationScore,
-      note: categoryNote(educationScore, 'Degree, branch, and graduation details are visible.', 'Make degree and graduation details prominent near the top.'),
+      note: categoryNote(
+        educationScore,
+        'Degree, branch, and graduation details are visible.',
+        'Make degree and graduation details prominent near the top.',
+      ),
     },
     {
       key: 'structure',
       label: 'Structure',
       score: structureScore,
-      note: categoryNote(structureScore, 'Core resume sections are easy to scan.', 'Add conventional headings so reviewers and parsers can scan quickly.'),
+      note: categoryNote(
+        structureScore,
+        'Core resume sections are easy to scan.',
+        'Add conventional headings so reviewers and parsers can scan quickly.',
+      ),
     },
     {
       key: 'ats',
       label: 'ATS readability',
       score: atsScore,
-      note: categoryNote(atsScore, 'Text is mostly clean and parser-friendly.', 'Keep lines concise and avoid dense visual formatting or tables.'),
+      note: categoryNote(
+        atsScore,
+        'Text is mostly clean and parser-friendly.',
+        'Keep lines concise and avoid dense visual formatting or tables.',
+      ),
     },
     {
       key: 'achievements',
       label: 'Achievements',
       score: achievementScore,
-      note: categoryNote(achievementScore, 'The resume includes evidence of outcomes and initiative.', 'Add more measurable outcomes, scale, or impact to project bullets.'),
+      note: categoryNote(
+        achievementScore,
+        'The resume includes evidence of outcomes and initiative.',
+        'Add more measurable outcomes, scale, or impact to project bullets.',
+      ),
     },
   ]
 
@@ -280,10 +374,13 @@ export function analyzeResume(resumeText: string, opportunity: Opportunity, stud
     ats: 0.15,
     achievements: 0.1,
   }
-  const score = Math.round(categories.reduce((total, category) => total + category.score * (weights[category.key] ?? 0), 0))
+  const score = Math.round(
+    categories.reduce((total, category) => total + category.score * (weights[category.key] ?? 0), 0),
+  )
 
   const strengths = [
-    requiredScore >= 65 && `${matchedSkills.length} of ${required.length} required skills are visible: ${matchedSkills.join(', ')}.`,
+    requiredScore >= 65 &&
+      `${matchedSkills.length} of ${required.length} required skills are visible: ${matchedSkills.join(', ')}.`,
     projectScore >= 60 && 'At least one project uses language that connects to this role.',
     structureScore >= 65 && 'The resume has recognizable sections that are easy to scan.',
     achievementScore >= 60 && 'There is evidence of initiative, outcomes, or measurable work.',
@@ -291,17 +388,28 @@ export function analyzeResume(resumeText: string, opportunity: Opportunity, stud
 
   const weakAreas = [
     missingSkills.length > 0 && `Required skills not clearly evidenced: ${missingSkills.join(', ')}.`,
-    matchedPreferred.length === 0 && preferred.length > 0 && `Preferred skills are not visible yet: ${preferred.join(', ')}.`,
-    projectScore < 60 && 'Projects could connect more explicitly to the selected role and its day-to-day work.',
+    matchedPreferred.length === 0 &&
+      preferred.length > 0 &&
+      `Preferred skills are not visible yet: ${preferred.join(', ')}.`,
+    projectScore < 60 &&
+      'Projects could connect more explicitly to the selected role and its day-to-day work.',
     achievementScore < 60 && 'Several bullets would be stronger with numbers, outcomes, or scope.',
     atsScore < 80 && 'Some formatting or line-length choices may reduce ATS readability.',
   ].filter(Boolean) as string[]
 
   const suggestions = [
-    missingSkills.length > 0 ? `Add one honest project bullet or coursework line that demonstrates ${missingSkills[0]}.` : 'Keep the strongest required skills in a dedicated, easy-to-scan skills line.',
-    matchedPreferred.length === 0 && preferred.length > 0 ? `If applicable, add evidence for ${preferred.slice(0, 2).join(' and ')} from coursework or projects.` : 'Move the most role-relevant project directly below the summary.',
-    projectScore < 70 ? 'Rewrite one project bullet using action + tool + outcome, for example: “Built X with Y, reducing Z by N%.”' : 'Make project outcomes as measurable as the implementation details.',
-    educationScore < 80 ? 'Put branch, degree, CGPA, and graduation year together near the top.' : 'Keep education details consistent with the placement form.',
+    missingSkills.length > 0
+      ? `Add one honest project bullet or coursework line that demonstrates ${missingSkills[0]}.`
+      : 'Keep the strongest required skills in a dedicated, easy-to-scan skills line.',
+    matchedPreferred.length === 0 && preferred.length > 0
+      ? `If applicable, add evidence for ${preferred.slice(0, 2).join(' and ')} from coursework or projects.`
+      : 'Move the most role-relevant project directly below the summary.',
+    projectScore < 70
+      ? 'Rewrite one project bullet using action + tool + outcome, for example: “Built X with Y, reducing Z by N%.”'
+      : 'Make project outcomes as measurable as the implementation details.',
+    educationScore < 80
+      ? 'Put branch, degree, CGPA, and graduation year together near the top.'
+      : 'Keep education details consistent with the placement form.',
     'Use this score as an editing guide, then ask your mentor or placement cell for a human review.',
   ]
 

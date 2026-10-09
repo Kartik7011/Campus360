@@ -3,21 +3,27 @@ import type { LucideIcon } from 'lucide-react'
 import {
   BellRing,
   BriefcaseBusiness,
-  ChevronRight,
   FileCheck2,
   GraduationCap,
   LayoutDashboard,
   LogOut,
   Menu,
   Settings2,
-  ShieldCheck,
   X,
 } from 'lucide-react'
-import type { Student, ViewKey } from '../types'
+import type { ViewKey } from '../types'
+import { useEnterAnimation } from '../useEnterAnimation'
 import { InitialsAvatar } from './ui'
 
+export interface ShellUser {
+  name: string
+  initials: string
+  subtitle: string
+  isAdmin: boolean
+}
+
 interface AppShellProps {
-  student: Student
+  user: ShellUser
   activeView: ViewKey
   onNavigate: (view: ViewKey) => void
   onLogout: () => void
@@ -39,17 +45,99 @@ const mainNav: NavItem[] = [
   { key: 'resume', label: 'Resume checker', shortLabel: 'Resume', icon: FileCheck2 },
 ]
 
+const adminNav: NavItem[] = [{ key: 'admin', label: 'Admin panel', shortLabel: 'Admin', icon: Settings2 }]
+
 const viewLabels: Record<ViewKey, string> = {
-  dashboard: 'Student overview',
+  dashboard: 'Overview',
   academic: 'Academic record',
   notices: 'Notices & deadlines',
   placements: 'Placement hub',
   resume: 'Resume checker',
-  admin: 'Admin demo panel',
+  admin: 'Admin panel',
 }
 
-export function AppShell({ student, activeView, onNavigate, onLogout, children }: AppShellProps) {
+export function LogoMark({ className = 'h-8 w-8' }: { className?: string }) {
+  // same artwork as public/favicon.svg: an orbit ring with a "satellite" in its gap around a centre point
+  return (
+    <svg viewBox="0 0 32 32" className={className} aria-hidden>
+      <defs>
+        <linearGradient id="c360-tile" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#3b73f6" />
+          <stop offset="1" stopColor="#152257" />
+        </linearGradient>
+      </defs>
+      <rect width="32" height="32" rx="9" fill="url(#c360-tile)" />
+      <circle
+        cx="16"
+        cy="16"
+        r="9"
+        fill="none"
+        stroke="#fff"
+        strokeWidth="2.4"
+        strokeDasharray="46 10.5"
+        strokeLinecap="round"
+      />
+      <circle cx="23.8" cy="11.5" r="2.3" fill="#93b8fd" />
+      <circle cx="16" cy="16" r="3.2" fill="#fff" />
+    </svg>
+  )
+}
+
+export function Logo({ inverted = false }: { inverted?: boolean }) {
+  return (
+    <span className="flex items-center gap-2.5">
+      <LogoMark className={`h-8 w-8 ${inverted ? 'rounded-[9px] ring-1 ring-white/25' : ''}`} />
+      <span
+        className={`font-display text-[17px] font-semibold ${inverted ? 'text-white' : 'text-slate-950'}`}
+      >
+        Campus<span className={inverted ? 'text-brand-300' : 'text-brand-600'}>360</span>
+      </span>
+    </span>
+  )
+}
+
+function NavButton({
+  icon: Icon,
+  label,
+  active,
+  onClick,
+  badge,
+}: {
+  icon: LucideIcon
+  label: string
+  active: boolean
+  onClick: () => void
+  badge?: number
+}) {
+  return (
+    <button
+      onClick={onClick}
+      aria-current={active ? 'page' : undefined}
+      className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors ${
+        active
+          ? 'bg-brand-50 font-semibold text-brand-800'
+          : 'font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+      }`}
+    >
+      <Icon
+        size={18}
+        strokeWidth={active ? 2.2 : 1.8}
+        className={active ? 'text-brand-700' : 'text-slate-500'}
+      />
+      <span>{label}</span>
+      {badge ? (
+        <span className="ml-auto rounded-md bg-rose-50 px-1.5 py-0.5 text-[11px] font-semibold text-rose-700">
+          {badge}
+        </span>
+      ) : null}
+    </button>
+  )
+}
+
+export function AppShell({ user, activeView, onNavigate, onLogout, children }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const navItems = user.isAdmin ? adminNav : mainNav
+  const contentRef = useEnterAnimation<HTMLDivElement>(activeView)
 
   const navigate = (view: ViewKey) => {
     onNavigate(view)
@@ -57,84 +145,70 @@ export function AppShell({ student, activeView, onNavigate, onLogout, children }
   }
 
   return (
-    <div className="min-h-screen bg-canvas text-slate-900">
-      <aside className={`fixed inset-y-0 left-0 z-40 flex w-[270px] flex-col bg-ink text-white transition-transform duration-300 lg:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="flex items-center justify-between px-6 pb-5 pt-7">
-          <button className="group flex items-center gap-3 text-left" onClick={() => navigate('dashboard')} aria-label="Go to Campus360 overview">
-            <div className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/10">
-              <div className="absolute h-5 w-5 rounded-full border-[3px] border-teal-300 border-r-transparent" />
-              <div className="h-1.5 w-1.5 rounded-full bg-amber-300" />
-            </div>
-            <div>
-              <p className="font-display text-[17px] font-bold tracking-tight">Campus<span className="text-teal-300">360</span></p>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.19em] text-slate-400">Student transparency</p>
-            </div>
+    <div className="min-h-dvh bg-canvas text-slate-900">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:shadow-soft"
+      >
+        Skip to content
+      </a>
+
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-slate-200 bg-white transition-transform duration-300 lg:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
+      >
+        <div className="flex h-16 items-center justify-between px-5">
+          <button onClick={() => navigate(navItems[0].key)} aria-label="Go to home page">
+            <Logo />
           </button>
-          <button className="rounded-lg p-1.5 text-slate-400 hover:bg-white/10 lg:hidden" onClick={() => setMobileOpen(false)} aria-label="Close navigation">
+          <button
+            className="grid h-11 w-11 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 lg:hidden"
+            onClick={() => setMobileOpen(false)}
+            aria-label="Close navigation"
+          >
             <X size={18} />
           </button>
         </div>
 
-        <div className="mx-5 mb-5 rounded-2xl border border-white/10 bg-white/[0.06] p-3">
-          <div className="flex items-center gap-3">
-            <InitialsAvatar initials={student.initials} size="md" tone="teal" />
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-white">{student.name}</p>
-              <p className="mt-0.5 truncate text-xs text-slate-400">{student.branch.replace(' & Engineering', '').replace('Computer Science', 'CSE')}</p>
-            </div>
-          </div>
-          <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-3 text-[11px]">
-            <span className="text-slate-400">Demo student</span>
-            <span className="flex items-center gap-1.5 font-semibold text-teal-300"><span className="h-1.5 w-1.5 rounded-full bg-teal-300" />Active</span>
-          </div>
-        </div>
-
-        <nav className="scrollbar-thin flex-1 overflow-y-auto px-3" aria-label="Main navigation">
-          <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Workspace</p>
-          <div className="space-y-1">
-            {mainNav.map((item) => {
-              const Icon = item.icon
-              const active = activeView === item.key
-              return (
-                <button
-                  key={item.key}
-                  onClick={() => navigate(item.key)}
-                  className={`group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium transition ${active ? 'bg-white text-ink shadow-lg shadow-slate-950/10' : 'text-slate-300 hover:bg-white/10 hover:text-white'}`}
-                  aria-current={active ? 'page' : undefined}
-                >
-                  <Icon size={18} strokeWidth={active ? 2.4 : 1.8} className={active ? 'text-violet-600' : 'text-slate-400 group-hover:text-teal-300'} />
-                  <span>{item.label}</span>
-                  {item.key === 'notices' && <span className={`ml-auto rounded-full px-1.5 py-0.5 text-[10px] font-bold ${active ? 'bg-rose-100 text-rose-600' : 'bg-rose-400/15 text-rose-300'}`}>3</span>}
-                </button>
-              )
-            })}
-          </div>
-
-          <div className="my-5 border-t border-white/10" />
-          <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Demo controls</p>
-          <button
-            onClick={() => navigate('admin')}
-            className={`group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium transition ${activeView === 'admin' ? 'bg-white text-ink shadow-lg shadow-slate-950/10' : 'text-slate-300 hover:bg-white/10 hover:text-white'}`}
-          >
-            <Settings2 size={18} strokeWidth={activeView === 'admin' ? 2.4 : 1.8} className={activeView === 'admin' ? 'text-violet-600' : 'text-slate-400 group-hover:text-teal-300'} />
-            <span>Admin demo panel</span>
-          </button>
+        <nav
+          className="scrollbar-thin flex-1 space-y-1 overflow-y-auto px-3 pt-2"
+          aria-label="Main navigation"
+        >
+          {navItems.map((item) => (
+            <NavButton
+              key={item.key}
+              icon={item.icon}
+              label={item.label}
+              active={activeView === item.key}
+              onClick={() => navigate(item.key)}
+              badge={item.key === 'notices' ? 3 : undefined}
+            />
+          ))}
         </nav>
 
-        <div className="p-4">
-          <div className="mb-3 rounded-2xl bg-gradient-to-br from-violet-500/20 to-teal-500/10 p-4 ring-1 ring-white/10">
-            <div className="mb-2 flex items-center gap-2 text-teal-300"><ShieldCheck size={15} /><span className="text-[11px] font-bold uppercase tracking-[0.15em]">Built for clarity</span></div>
-            <p className="text-xs leading-5 text-slate-300">Your academic record, opportunity rules, and next actions in one place.</p>
+        <div className="border-t border-slate-200 p-3">
+          <div className="flex items-center gap-3 rounded-lg px-2 py-2">
+            <InitialsAvatar initials={user.initials} size="md" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-slate-900">{user.name}</p>
+              <p className="truncate text-xs text-slate-500">{user.subtitle}</p>
+            </div>
+            <button
+              onClick={onLogout}
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+              aria-label="Sign out"
+              title="Sign out"
+            >
+              <LogOut size={17} />
+            </button>
           </div>
-          <button onClick={onLogout} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-slate-400 transition hover:bg-white/10 hover:text-white">
-            <LogOut size={17} />
-            <span>Switch demo student</span>
-          </button>
         </div>
       </aside>
 
-      <nav className="fixed inset-x-3 bottom-3 z-30 flex items-stretch justify-around rounded-2xl border border-slate-200 bg-white/95 p-1.5 shadow-soft backdrop-blur-xl lg:hidden" aria-label="Mobile navigation">
-        {mainNav.map((item) => {
+      <nav
+        className={`fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden ${user.isAdmin ? 'hidden' : 'flex'}`}
+        aria-label="Mobile navigation"
+      >
+        {navItems.map((item) => {
           const Icon = item.icon
           const active = activeView === item.key
           return (
@@ -143,38 +217,52 @@ export function AppShell({ student, activeView, onNavigate, onLogout, children }
               onClick={() => navigate(item.key)}
               aria-current={active ? 'page' : undefined}
               aria-label={item.label}
-              className={`flex min-h-[56px] min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1.5 text-[10px] font-bold transition ${active ? 'bg-indigo-50 text-indigo-700' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-700'}`}
+              className={`flex min-h-[56px] min-w-0 flex-1 flex-col items-center justify-center gap-1 text-[11px] transition-colors ${active ? 'font-semibold text-brand-700' : 'font-medium text-slate-500'}`}
             >
-              <Icon size={18} strokeWidth={active ? 2.4 : 1.8} />
-              <span className="max-w-full truncate">{item.shortLabel}</span>
+              <Icon size={20} strokeWidth={active ? 2.2 : 1.8} />
+              <span className="max-w-full truncate px-1">{item.shortLabel}</span>
             </button>
           )
         })}
       </nav>
 
-      {mobileOpen && <button className="fixed inset-0 z-30 bg-slate-950/50 lg:hidden" onClick={() => setMobileOpen(false)} aria-label="Close navigation overlay" />}
+      {mobileOpen && (
+        <button
+          className="fixed inset-0 z-30 bg-slate-950/40 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+          aria-label="Close navigation overlay"
+        />
+      )}
 
-      <main className="min-h-screen lg:pl-[270px]">
-        <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-canvas/90 px-4 py-3 backdrop-blur-xl sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <button className="rounded-xl bg-white p-2 text-slate-600 shadow-sm ring-1 ring-slate-200 lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Open navigation"><Menu size={19} /></button>
-              <div>
-                <p className="hidden text-xs font-semibold uppercase tracking-[0.15em] text-slate-400 sm:block">Campus360 workspace</p>
-                <h1 className="max-w-[190px] truncate font-display text-lg font-bold tracking-tight text-slate-950 sm:max-w-none sm:text-xl">{viewLabels[activeView]}</h1>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="hidden items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-semibold text-slate-500 shadow-sm ring-1 ring-slate-200 sm:flex"><span className="h-2 w-2 rounded-full bg-emerald-500" />Demo data synced</div>
-              <button onClick={() => navigate('admin')} aria-label="Open admin demo panel" className="flex items-center gap-2 rounded-full bg-white py-1.5 pl-1.5 pr-3 text-left shadow-sm ring-1 ring-slate-200 transition hover:ring-indigo-300">
-                <InitialsAvatar initials={student.initials} size="sm" />
-                <span className="hidden text-xs font-semibold text-slate-700 sm:block">{student.name.split(' ')[0]}</span>
-                <ChevronRight size={14} className="text-slate-400" />
+      <main id="main" className="min-h-dvh lg:pl-64">
+        <header className="sticky top-0 z-20 border-b border-slate-200 bg-canvas/90 backdrop-blur">
+          <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+            <div className="flex min-w-0 items-center gap-2">
+              <button
+                className="-ml-2 grid h-11 w-11 shrink-0 place-items-center rounded-lg text-slate-600 hover:bg-slate-100 lg:hidden"
+                onClick={() => setMobileOpen(true)}
+                aria-label="Open navigation"
+              >
+                <Menu size={20} />
               </button>
+              <h1 className="truncate font-display text-lg font-semibold text-slate-950">
+                {viewLabels[activeView]}
+              </h1>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <span className="hidden items-center gap-1.5 sm:flex">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                Saved on this device
+              </span>
+              <span className="lg:hidden">
+                <InitialsAvatar initials={user.initials} size="sm" />
+              </span>
             </div>
           </div>
         </header>
-        <div className="px-4 pb-28 pt-6 sm:px-6 lg:px-8 lg:pb-12 lg:pt-8">{children}</div>
+        <div ref={contentRef} className="mx-auto max-w-6xl px-4 pb-28 pt-6 sm:px-6 lg:px-8 lg:pb-12 lg:pt-8">
+          {children}
+        </div>
       </main>
     </div>
   )

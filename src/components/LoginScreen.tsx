@@ -1,53 +1,194 @@
-import { ArrowRight, BookOpenCheck, BriefcaseBusiness, CheckCircle2, ShieldCheck, Sparkles } from 'lucide-react'
+import { useState } from 'react'
+import { BellRing, BriefcaseBusiness, Eye, EyeOff, GraduationCap } from 'lucide-react'
+import { signIn, type Role, type Session } from '../auth'
 import type { Student } from '../types'
-import { InitialsAvatar } from './ui'
+import { useEnterAnimation } from '../useEnterAnimation'
+import { Logo } from './Layout'
 
-export function LoginScreen({ students, onLogin }: { students: Student[]; onLogin: (id: string) => void }) {
+const highlights = [
+  { icon: GraduationCap, title: 'Academic record', text: 'CGPA, backlogs, mentor and rechecking status' },
+  {
+    icon: BriefcaseBusiness,
+    title: 'Placement eligibility',
+    text: 'Each company’s criteria checked against your record',
+  },
+  { icon: BellRing, title: 'Notices & deadlines', text: 'Updates from every office, with time left' },
+]
+
+export function LoginScreen({
+  students,
+  onLogin,
+}: {
+  students: Student[]
+  onLogin: (session: Session) => void
+}) {
+  const heroRef = useEnterAnimation<HTMLDivElement>('login', ':scope > *')
+  const formRef = useEnterAnimation<HTMLDivElement>('login', ':scope > *')
+  const [role, setRole] = useState<Role>('student')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState('')
+
+  const submit = (event: React.FormEvent) => {
+    event.preventDefault()
+    const session = signIn(email, password, students)
+    if (!session) return setError('Email or password is incorrect.')
+    if (session.role !== role)
+      return setError(
+        role === 'admin'
+          ? 'This is a student account. Use the Student tab.'
+          : 'This is an admin account. Use the Admin tab.',
+      )
+    onLogin(session)
+  }
+
+  const switchRole = (next: Role) => {
+    setRole(next)
+    setError('')
+  }
+
   return (
-    <div className="min-h-screen w-full overflow-x-hidden bg-ink text-white">
-      <div className="absolute inset-0 campus-grid opacity-20" />
-      <div className="absolute -right-24 -top-32 h-96 w-96 rounded-full bg-violet-500/20 blur-3xl" />
-      <div className="absolute -bottom-40 left-1/3 h-96 w-96 rounded-full bg-teal-400/10 blur-3xl" />
-      <div className="relative mx-auto flex min-h-screen w-full max-w-7xl items-start px-4 py-6 sm:items-center sm:px-8 sm:py-8 lg:px-12">
-        <div className="grid w-full min-w-0 grid-cols-1 gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-12">
-          <section className="min-w-0 w-full max-w-xl">
-            <div className="mb-7 flex items-center gap-3 sm:mb-10">
-              <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/15">
-                <div className="absolute h-6 w-6 rounded-full border-[3px] border-teal-300 border-r-transparent" />
-                <div className="h-1.5 w-1.5 rounded-full bg-amber-300" />
-              </div>
-              <div><p className="font-display text-lg font-bold">Campus<span className="text-teal-300">360</span></p><p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Student transparency platform</p></div>
-            </div>
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-teal-300/20 bg-teal-300/10 px-3 py-1.5 text-xs font-semibold text-teal-200"><Sparkles size={14} /> Capstone-I MTE demo</div>
-            <h1 className="font-display text-3xl font-bold leading-[1.08] tracking-[-0.04em] text-white sm:text-6xl">Know where you stand.<br /><span className="text-gradient">Choose what’s next.</span></h1>
-            <p className="mt-4 max-w-lg text-sm leading-6 text-slate-300 sm:mt-6 sm:text-lg sm:leading-7">A single student view for academic records, placement rules, important notices, and practical resume improvement.</p>
-            <div className="mt-6 hidden max-w-lg gap-3 sm:grid sm:grid-cols-3 sm:mt-9">
-              {[
-                { icon: BookOpenCheck, label: 'Academic clarity' },
-                { icon: BriefcaseBusiness, label: 'Placement transparency' },
-                { icon: ShieldCheck, label: 'Human-led decisions' },
-              ].map(({ icon: Icon, label }) => <div key={label} className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.05] px-3 py-3 text-xs font-semibold text-slate-300"><Icon size={15} className="text-teal-300" />{label}</div>)}
-            </div>
-          </section>
+    <div className="grid min-h-dvh bg-white lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+      <section className="relative overflow-hidden bg-gradient-to-br from-brand-950 via-brand-900 to-brand-700 text-white">
+        {/* faint dot grid + a soft light source so the panel has depth without decoration */}
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.12)_1px,transparent_1px)] [background-size:22px_22px] [mask-image:linear-gradient(to_bottom,black,transparent_85%)]" />
+        <div className="pointer-events-none absolute -right-32 -top-32 h-[28rem] w-[28rem] rounded-full bg-brand-500/30 blur-3xl" />
 
-          <section className="min-w-0 w-full rounded-[24px] border border-white/10 bg-white p-4 text-slate-900 shadow-2xl shadow-slate-950/30 sm:rounded-[28px] sm:p-7">
-            <div className="mb-7 flex items-start justify-between gap-4">
-              <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-500">Demo access</p><h2 className="mt-2 font-display text-2xl font-bold tracking-tight text-slate-950">Choose a student profile</h2><p className="mt-1 text-sm leading-6 text-slate-500">No password needed for this MTE walkthrough.</p></div>
-              <div className="rounded-2xl bg-emerald-50 p-2.5 text-emerald-600"><CheckCircle2 size={20} /></div>
-            </div>
-            <div className="space-y-3">
-              {students.map((student, index) => (
-                <button key={student.id} onClick={() => onLogin(student.id)} className="group flex w-full items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-50/50 hover:shadow-card">
-                  <InitialsAvatar initials={student.initials} size="lg" tone={index === 0 ? 'indigo' : 'teal'} />
-                  <div className="min-w-0 flex-1"><p className="font-display text-base font-bold text-slate-900">{student.name}</p><p className="mt-1 truncate text-sm text-slate-500">{student.branch}</p><div className="mt-2 flex flex-wrap gap-2 text-[11px] font-semibold text-slate-500"><span className="rounded-full bg-white px-2 py-1 ring-1 ring-slate-200">Sem {student.semester}</span><span className="rounded-full bg-white px-2 py-1 ring-1 ring-slate-200">CGPA {student.cgpa?.toFixed(2) ?? '—'}</span></div></div>
-                  <ArrowRight size={19} className="text-slate-300 transition group-hover:translate-x-1 group-hover:text-indigo-500" />
-                </button>
+        <div className="relative flex h-full flex-col px-5 py-6 sm:px-10 sm:py-10 xl:px-16">
+          <Logo inverted />
+          <div ref={heroRef} className="flex flex-1 flex-col justify-center py-8 lg:py-12">
+            <h1 className="max-w-xl font-display text-3xl font-semibold leading-tight sm:text-4xl xl:text-5xl">
+              Your academic record and placement status, in one place.
+            </h1>
+            <p className="mt-4 max-w-[52ch] text-base leading-7 text-brand-100">
+              See where you stand before you apply, and why. Eligibility is checked rule by rule against each
+              company’s published criteria.
+            </p>
+            <ul className="mt-8 hidden gap-3 sm:grid xl:grid-cols-3">
+              {highlights.map(({ icon: Icon, title, text }) => (
+                <li
+                  key={title}
+                  className="rounded-xl border border-white/15 bg-white/[0.07] p-4 backdrop-blur-sm"
+                >
+                  <span className="grid h-9 w-9 place-items-center rounded-lg bg-white/15 text-brand-200">
+                    <Icon size={18} />
+                  </span>
+                  <p className="mt-3 text-sm font-semibold">{title}</p>
+                  <p className="mt-1 text-sm leading-5 text-brand-100/90">{text}</p>
+                </li>
               ))}
-            </div>
-            <div className="mt-7 flex gap-3 rounded-2xl bg-slate-950 p-4 text-slate-300"><ShieldCheck size={18} className="mt-0.5 shrink-0 text-teal-300" /><p className="text-xs leading-5">This is seeded demo data for academic review. Official eligibility decisions remain with the college placement cell.</p></div>
-          </section>
+            </ul>
+          </div>
+          <p className="hidden text-xs text-brand-200 lg:block">
+            Eligibility results are guidance only. Official decisions remain with the college placement cell.
+          </p>
         </div>
-      </div>
+      </section>
+
+      <section className="flex items-center justify-center bg-canvas px-4 py-8 sm:px-8 lg:py-12">
+        <div ref={formRef} className="w-full max-w-[26rem]">
+          <h2 className="font-display text-2xl font-semibold text-slate-950">Welcome back</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            {role === 'student'
+              ? 'Sign in with your college email and password.'
+              : 'Placement office and staff access.'}
+          </p>
+
+          <div
+            className="mt-6 grid grid-cols-2 rounded-lg bg-slate-200/70 p-1"
+            role="tablist"
+            aria-label="Account type"
+          >
+            {(['student', 'admin'] as Role[]).map((item) => (
+              <button
+                key={item}
+                type="button"
+                role="tab"
+                aria-selected={role === item}
+                onClick={() => switchRole(item)}
+                className={`h-9 rounded-md text-sm font-medium capitalize transition-colors ${role === item ? 'bg-white text-brand-800 shadow-card' : 'text-slate-600 hover:text-slate-900'}`}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+
+          <form onSubmit={submit} className="mt-5 space-y-4" noValidate>
+            <div>
+              <label htmlFor="email" className="text-sm font-medium text-slate-700">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                autoComplete="username"
+                required
+                value={email}
+                onChange={(event) => {
+                  setEmail(event.target.value)
+                  setError('')
+                }}
+                placeholder={
+                  role === 'student'
+                    ? 'name.surname@galgotiasuniversity.ac.in'
+                    : 'admin@galgotiasuniversity.ac.in'
+                }
+                className="form-input mt-1.5 bg-white"
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? 'signin-error' : undefined}
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="text-sm font-medium text-slate-700">
+                Password
+              </label>
+              <div className="relative mt-1.5">
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  required
+                  value={password}
+                  onChange={(event) => {
+                    setPassword(event.target.value)
+                    setError('')
+                  }}
+                  className="form-input bg-white pr-12"
+                  aria-invalid={Boolean(error)}
+                  aria-describedby={error ? 'signin-error' : undefined}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((value) => !value)}
+                  className="absolute inset-y-0 right-0 grid w-11 place-items-center text-slate-500 hover:text-slate-800"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                </button>
+              </div>
+            </div>
+
+            {error && (
+              <p id="signin-error" role="alert" className="text-sm font-medium text-rose-700">
+                {error}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={!email.trim() || !password}
+              className="h-11 w-full rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 text-sm font-semibold text-white shadow-sm shadow-brand-700/30 transition hover:from-brand-700 hover:to-brand-800 active:scale-[0.99] disabled:cursor-not-allowed disabled:from-slate-300 disabled:to-slate-300 disabled:shadow-none"
+            >
+              Sign in
+            </button>
+          </form>
+
+          <p className="mt-8 text-xs leading-5 text-slate-500 lg:hidden">
+            Eligibility results are guidance only. Official decisions remain with the college placement cell.
+          </p>
+        </div>
+      </section>
     </div>
   )
 }
