@@ -9,7 +9,7 @@ import { LoginScreen } from './components/LoginScreen'
 import { AppShell } from './components/Layout'
 import type { Session } from './auth'
 import { seedData } from './data'
-import type { AppData, Notice, Opportunity, PlacementStage, Student, ViewKey } from './types'
+import type { AppData, Notice, Opportunity, PlacementStage, RecheckRequest, Student, ViewKey } from './types'
 
 export const STORAGE_KEY = 'campus360-data'
 const SESSION_KEY = 'campus360-session'
@@ -94,6 +94,14 @@ export default function App() {
       ),
     }))
 
+  const addRecheck = (request: RecheckRequest) =>
+    setData((current) => ({ ...current, rechecks: [request, ...current.rechecks] }))
+  const updateRecheck = (id: string, patch: Partial<RecheckRequest>) =>
+    setData((current) => ({
+      ...current,
+      rechecks: current.rechecks.map((request) => (request.id === id ? { ...request, ...patch } : request)),
+    }))
+
   const renderView = () => {
     if (!currentStudent) {
       return (
@@ -103,11 +111,13 @@ export default function App() {
           companies={data.companies}
           opportunities={data.opportunities}
           applications={data.applications}
+          rechecks={data.rechecks}
           onUpdateStudent={updateStudent}
           onAddNotice={addNotice}
           onRemoveNotice={removeNotice}
           onAddOpportunity={addOpportunity}
           onUpdateStage={updateStage}
+          onUpdateRecheck={updateRecheck}
         />
       )
     }
@@ -118,6 +128,7 @@ export default function App() {
             student={currentStudent}
             mentor={data.mentor}
             rechecks={data.rechecks}
+            onAddRecheck={addRecheck}
             onNavigate={setActiveView}
           />
         )

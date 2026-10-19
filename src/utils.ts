@@ -3,6 +3,7 @@ import type {
   EligibilityResult,
   EligibilityRule,
   Opportunity,
+  RecheckRequest,
   ResumeAnalysis,
   ResumeCategory,
   Student,
@@ -414,4 +415,26 @@ export function analyzeResume(
   ]
 
   return { score, categories, matchedSkills, missingSkills, strengths, weakAreas, suggestions }
+}
+
+export function createRecheckRequest(
+  studentId: string,
+  subject: string,
+  code: string,
+  today = new Date(),
+): RecheckRequest | null {
+  if (!subject.trim() || !code.trim()) return null
+  const requestDate = today.toISOString().slice(0, 10)
+  // the published rechecking window is two weeks from the request date
+  const expectedBy = new Date(today.getTime() + 14 * 86_400_000).toISOString().slice(0, 10)
+  return {
+    id: `recheck-${studentId}-${today.getTime()}`,
+    studentId,
+    subject: subject.trim(),
+    code: code.trim().toUpperCase(),
+    requestDate,
+    status: 'Submitted',
+    remarks: 'Request received. Awaiting fee verification.',
+    expectedBy,
+  }
 }

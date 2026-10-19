@@ -1,3 +1,4 @@
+import { useState, type FormEvent } from 'react'
 import {
   AtSign,
   BookOpenCheck,
@@ -8,25 +9,38 @@ import {
   Mail,
   MapPin,
   Phone,
+  Plus,
   ShieldCheck,
   UserRound,
 } from 'lucide-react'
 import type { Mentor, RecheckRequest, Student, ViewKey } from '../types'
-import { formatDate } from '../utils'
+import { createRecheckRequest, formatDate } from '../utils'
 import { InfoRow, InitialsAvatar, ProgressBar, SectionHeading, StatusBadge } from '../components/ui'
 
 export function Academic({
   student,
   mentor,
   rechecks,
+  onAddRecheck,
   onNavigate,
 }: {
   student: Student
   mentor: Mentor
   rechecks: RecheckRequest[]
+  onAddRecheck: (request: RecheckRequest) => void
   onNavigate: (view: ViewKey) => void
 }) {
   const studentRechecks = rechecks.filter((item) => item.studentId === student.id)
+  const [subject, setSubject] = useState('')
+  const [code, setCode] = useState('')
+  const submitRecheck = (event: FormEvent) => {
+    event.preventDefault()
+    const request = createRecheckRequest(student.id, subject, code)
+    if (!request) return
+    onAddRecheck(request)
+    setSubject('')
+    setCode('')
+  }
   const creditProgress = Math.round((student.creditsCompleted / student.totalCredits) * 100)
   return (
     <div className="space-y-7">
@@ -141,6 +155,36 @@ export function Academic({
               </button>
             }
           />
+          <form onSubmit={submitRecheck} className="mt-5 grid gap-2 sm:grid-cols-[1fr_140px_auto]">
+            <label className="sr-only" htmlFor="recheck-subject">
+              Subject
+            </label>
+            <input
+              id="recheck-subject"
+              value={subject}
+              onChange={(event) => setSubject(event.target.value)}
+              placeholder="Subject"
+              className="form-input text-sm"
+              required
+            />
+            <label className="sr-only" htmlFor="recheck-code">
+              Course code
+            </label>
+            <input
+              id="recheck-code"
+              value={code}
+              onChange={(event) => setCode(event.target.value)}
+              placeholder="Course code"
+              className="form-input text-sm"
+              required
+            />
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-ink px-4 py-2.5 text-xs font-bold text-white transition hover:bg-slate-800"
+            >
+              <Plus size={14} /> Request rechecking
+            </button>
+          </form>
           <div className="mt-5 overflow-x-auto">
             <table className="w-full min-w-[620px] text-left">
               <thead>

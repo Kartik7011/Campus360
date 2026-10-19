@@ -7,6 +7,7 @@ import {
   Check,
   ChevronDown,
   Edit3,
+  FileSearch,
   Plus,
   Save,
   Settings2,
@@ -20,12 +21,13 @@ import type {
   Opportunity,
   PlacementApplication,
   PlacementStage,
+  RecheckRequest,
   Student,
 } from '../types'
 import { formatDate, getCompanyByOpportunity } from '../utils'
 import { InitialsAvatar, Modal, SectionHeading, StatusBadge } from '../components/ui'
 
-type AdminTab = 'students' | 'notices' | 'opportunities' | 'stages'
+type AdminTab = 'students' | 'notices' | 'opportunities' | 'stages' | 'rechecks'
 
 interface AdminProps {
   students: Student[]
@@ -33,11 +35,13 @@ interface AdminProps {
   companies: Company[]
   opportunities: Opportunity[]
   applications: PlacementApplication[]
+  rechecks: RecheckRequest[]
   onUpdateStudent: (id: string, patch: Partial<Student>) => void
   onAddNotice: (notice: Notice) => void
   onRemoveNotice: (id: string) => void
   onAddOpportunity: (opportunity: Opportunity) => void
   onUpdateStage: (applicationId: string, stage: PlacementStage) => void
+  onUpdateRecheck: (id: string, patch: Partial<RecheckRequest>) => void
 }
 
 const stages: PlacementStage[] = ['Applied', 'Aptitude', 'Technical', 'HR', 'Selected', 'Rejected']
@@ -48,11 +52,13 @@ export function Admin({
   companies,
   opportunities,
   applications,
+  rechecks,
   onUpdateStudent,
   onAddNotice,
   onRemoveNotice,
   onAddOpportunity,
   onUpdateStage,
+  onUpdateRecheck,
 }: AdminProps) {
   const [tab, setTab] = useState<AdminTab>('students')
   const [editStudent, setEditStudent] = useState<Student | null>(null)
@@ -82,6 +88,7 @@ export function Admin({
     { key: 'notices' as const, label: 'Notices', icon: BellRing },
     { key: 'opportunities' as const, label: 'Opportunities', icon: BriefcaseBusiness },
     { key: 'stages' as const, label: 'Placement stages', icon: Activity },
+    { key: 'rechecks' as const, label: 'Rechecking', icon: FileSearch },
   ]
 
   const saveNotice = () => {
@@ -196,6 +203,9 @@ export function Admin({
           companies={companies}
           onUpdateStage={onUpdateStage}
         />
+      )}
+      {tab === 'rechecks' && (
+        <RecheckManager rechecks={rechecks} students={students} onUpdate={onUpdateRecheck} />
       )}
 
       <StudentEditModal
@@ -662,6 +672,67 @@ function StageManager({
             </div>
           )
         })}
+      </div>
+    </section>
+  )
+}
+
+function RecheckManager({
+  rechecks,
+  students,
+  onUpdate,
+}: {
+  rechecks: RecheckRequest[]
+  students: Student[]
+  onUpdate: (id: string, patch: Partial<RecheckRequest>) => void
+}) {
+  return (
+    <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card sm:p-6">
+      <SectionHeading
+        title="Rechecking requests"
+        description="Update the status and remarks so students can see where their request stands."
+      />
+      <div className="mt-5 space-y-3">
+        {rechecks.map((request) => (
+          <div
+            key={request.id}
+            className="grid gap-3 rounded-2xl border border-slate-100 p-4 lg:grid-cols-[1fr_170px_1.2fr]"
+          >
+            <div>
+              <p className="font-display font-bold text-slate-900">
+                {request.subject} <span className="text-xs font-semibold text-slate-500">{request.code}</span>
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                {students.find((student) => student.id === request.studentId)?.name ?? request.studentId} ·
+                requested {formatDate(request.requestDate)}
+              </p>
+            </div>
+            <div className="relative">
+              <select
+                aria-label={`Status for ${request.subject}`}
+                value={request.status}
+                onChange={(event) =>
+                  onUpdate(request.id, { status: event.target.value as RecheckRequest['status'] })
+                }
+                className="form-input w-full appearance-none pr-9 text-xs font-bold"
+              >
+                <option>Submitted</option>
+                <option>Under Review</option>
+                <option>Resolved</option>
+              </select>
+              <ChevronDown
+                size={15}
+                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"
+              />
+            </div>
+            <input
+              aria-label={`Remarks for ${request.subject}`}
+              value={request.remarks}
+              onChange={(event) => onUpdate(request.id, { remarks: event.target.value })}
+              className="form-input text-xs"
+            />
+          </div>
+        ))}
       </div>
     </section>
   )
