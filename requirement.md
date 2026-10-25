@@ -406,24 +406,49 @@ These are university decisions, not software decisions. The system will implemen
 
 ## 9. Implementation status (current build)
 
-| Area | Status | Notes |
-|---|---|---|
-| Student profile and academic summary | Partly built | Single CGPA, backlog count, credits, mentor; no subject or semester detail |
-| Marks (subject-wise, semester-wise) | Not built | |
-| Report card PDFs and verification | Not built | |
-| Class attendance | Partly built | Overall percentage only |
-| Exam schedule, hall ticket, exam-day attendance | Not built | |
-| Rechecking | Partly built | Submit and admin status/remarks; no fee, service types or SLA |
-| Back/special exams, withdrawals, refunds | Not built | |
-| Fees, ledger, receipts, payments | Not built | |
-| Placement eligibility (3-state, rule by rule) | Built | Criteria versioning and offer policy not built |
-| Application stage tracking | Built | |
-| Resume checker (upload, meaning-based matching) | Built | Threshold not yet calibrated |
-| Notices | Partly built | No targeting, email/SMS/push or read receipts |
-| Role-based access on the database | Built | Student and admin roles only; other staff roles not built |
-| Audit log of staff changes | Built | Database triggers; admin view |
-| Single sign-on, staff MFA | Not built | Email and password sign-in today |
-| ERP integration | Not built | Sample data |
-| Helpdesk, mentoring alerts, dashboards | Not built | |
-| Hosting in India | Not met | Database is in Seoul; Supabase offers a Mumbai region |
-| Automated tests and CI | Built | Runs on every push |
+Status as of 26 October 2026. "Built" means the feature works in the app and its rules are enforced by the database; "Stand-in" means the in-app side is built but an outside system is simulated until the university connects the real one.
+
+| Area | Requirements | Status | Notes |
+|---|---|---|---|
+| Student profile, source and sync time | FR-PRO-01–04 | Built | Values are seeded, not synced (see ERP) |
+| Marks by subject and semester, attempts, change history, grace/moderation | FR-MRK-01–09 | Built | SGPA/CGPA come from the record; the app recalculates only when standing in for the ERP |
+| Grade sheet and consolidated statement PDFs, QR verification, superseding | FR-DOC-01–04 | Built | Public page `/#/verify/<serial>` shows live figures |
+| Official document requests with fees and tracking | FR-DOC-05 | Built | Degree certificate needs no-dues clearance |
+| DigiLocker / National Academic Depository | FR-DOC-06 | Not built | Needs university DigiLocker issuer registration |
+| Graduates keep access to documents | FR-DOC-07 | Built | Graduated students see results, fees, help and profile |
+| Class attendance, shortage warnings, recovery count, condonation | FR-ATT-01–03 | Built | |
+| Exam timetable, hall ticket PDF with blockers, clash detection, seats | FR-EXM-01–04 | Built | |
+| Exam-hall attendance: double entry, mismatch hold, scans, disputes | FR-EXA-01–07 | Built | Database rejects both entries by the same person |
+| Invigilator QR app | FR-EXA-08 | Not built | Phase 3 |
+| Rechecking, revaluation, answer-sheet copy with fees, windows, SLA escalation | FR-RCK-01–06 | Built | |
+| Back and special exams, eligibility, approval, fees | FR-BCK-01–04, FR-SPL-01–02 | Built | Attempt limits (FR-BCK-04) not shown; needs the regulation's numbers |
+| Duplicate prevention and safe double submission | FR-DUP-01–04 | Built | Enforced by a database guard and unique index |
+| Withdrawals, fee adjustment and refunds, maker–checker, credit notes | FR-WDR-01–04, FR-RFD-01–04 | Built | Refund money movement is a stand-in (test gateway) |
+| Refund to bank details when the card can't be refunded | FR-RFD-05 | Not built | Needs a penny-drop verification provider |
+| Fees, ledger, receipts, late fines, instalments, fee certificate | FR-FEE-01–06, 08, 10, 11 | Built | |
+| Bank reconciliation | FR-FEE-07 | Stand-in | Logic built; the test gateway's bank confirms every pending payment |
+| Scholarships | FR-FEE-09 | Built | Status entered by Accounts, not fetched from portals |
+| Placement eligibility, apply/override, criteria versions, offer policy, consented sharing, letters | FR-PLC-01–08 | Built | Database rejects ineligible applications |
+| Resume checker | FR-RES-01–04 | Built | Similarity threshold not yet calibrated |
+| Targeted notices, read receipts, notifications, calendar | FR-NOT-01, 03, 04, 06 | Built | In-app notifications |
+| Email, SMS and push delivery; channel preferences | FR-NOT-02, 05 | Not built | Needs messaging providers |
+| Mentoring: appointments, early warnings, notes | FR-MNT-01–03 | Built | |
+| Helpdesk with routing, deadlines, escalation, grievance committee, FAQ | FR-HLP-01–04 | Built | |
+| Office queues, CSV import/export, NAAC/NIRF exports, dashboards | FR-ADM-01–04 | Built | |
+| Lateral entry, credit transfer, no-dues clearance | FR-LIF-01–03 | Built | Programme change and year-back are shown from the record, not processed in the app |
+| Staff roles, department/school scoping, parent access with consent | §2, NFR-PRV-04 | Built | |
+| Server-enforced access, audit log | NFR-SEC-01, 02, 05, 06 | Built | |
+| Staff MFA, session timeouts | NFR-SEC-04, 09 | Built | MFA applies with the database; browser-only mode has none |
+| Single sign-on (Google/Microsoft) | NFR-SEC-03 | Built, needs setup | Providers must be enabled in Supabase; passwords remain available |
+| Card data never on our servers | NFR-SEC-07 | Met | No card data is collected |
+| Virus scanning, VAPT | NFR-SEC-08, 10 | Not built | Needs a scanning service and an external audit |
+| Privacy notice and consent, data export, retention | NFR-PRV-01, 03, 05 | Built | Retention periods are a policy decision (§7) |
+| Hosting in India | NFR-PRV-02 | Not met | Current project is in Seoul; move to Mumbai |
+| ERP integration and stale-data warning | NFR-INT-01–03 | Stand-in | Stale-data banner built; sync needs the ERP's API |
+| Payment gateway | NFR-INT-04 | Stand-in | Test gateway (`pay_charges`) |
+| Scale and performance at 40,000 students | NFR-PER-01–04 | Not met | Staff screens load all rows; needs paging and a load test. Staff workspace is loaded separately to keep the student app small |
+| Availability, backups, restore tests | NFR-AVL-01–03 | Not built | Depends on the Supabase plan and operations |
+| Mobile-first, accessibility | NFR-USE-01, 02 | Built | Checked at 360 px; no formal WCAG audit yet |
+| Hindi | NFR-USE-03 | Not built | |
+| Monitoring, staging environment | NFR-OPS-01, 02 | Not built | |
+| Automated tests and CI | NFR-OPS-03 | Built | 70 tests run in CI, including 11 that apply every migration to PostgreSQL and check each role's access |

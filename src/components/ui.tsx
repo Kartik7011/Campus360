@@ -219,3 +219,251 @@ export function RuleIcon({ status }: { status: 'Pass' | 'Fail' | 'Unknown' }) {
   if (status === 'Fail') return <AlertCircle size={17} className="text-rose-500" />
   return <HelpCircle size={17} className="text-violet-500" />
 }
+
+export function Card({
+  title,
+  description,
+  action,
+  children,
+  className = '',
+}: {
+  title?: string
+  description?: string
+  action?: ReactNode
+  children: ReactNode
+  className?: string
+}) {
+  return (
+    <section
+      className={`min-w-0 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card sm:p-6 ${className}`}
+    >
+      {title && <SectionHeading title={title} description={description} action={action} />}
+      <div className={title ? 'mt-5' : ''}>{children}</div>
+    </section>
+  )
+}
+
+export function Button({
+  children,
+  tone = 'primary',
+  size = 'md',
+  className = '',
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  tone?: 'primary' | 'secondary' | 'danger' | 'ghost'
+  size?: 'sm' | 'md'
+}) {
+  const tones = {
+    primary: 'bg-ink text-white hover:bg-slate-800',
+    secondary: 'bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50',
+    danger: 'bg-white text-rose-700 ring-1 ring-rose-200 hover:bg-rose-50',
+    ghost: 'text-slate-600 hover:bg-slate-100',
+  }
+  const sizes = { sm: 'min-h-[36px] px-3 py-1.5 text-xs', md: 'min-h-[44px] px-4 py-2.5 text-sm' }
+  return (
+    <button
+      type="button"
+      {...props}
+      className={`inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition disabled:cursor-not-allowed disabled:opacity-40 ${tones[tone]} ${sizes[size]} ${className}`}
+    >
+      {children}
+    </button>
+  )
+}
+
+export function Field({
+  label,
+  hint,
+  children,
+  wide = false,
+}: {
+  label: string
+  hint?: string
+  children: ReactNode
+  wide?: boolean
+}) {
+  return (
+    <label className={`block min-w-0 ${wide ? 'sm:col-span-2' : ''}`}>
+      <span className="mb-1.5 block text-xs font-medium text-slate-500">{label}</span>
+      {children}
+      {hint && <span className="mt-1 block text-xs text-slate-500">{hint}</span>}
+    </label>
+  )
+}
+
+export function Callout({
+  tone = 'info',
+  children,
+}: {
+  tone?: 'info' | 'warn' | 'error' | 'ok'
+  children: ReactNode
+}) {
+  const tones = {
+    info: 'border-slate-200 bg-slate-50 text-slate-700',
+    warn: 'border-amber-200 bg-amber-50 text-amber-900',
+    error: 'border-rose-200 bg-rose-50 text-rose-900',
+    ok: 'border-emerald-200 bg-emerald-50 text-emerald-900',
+  }
+  return (
+    <div
+      role={tone === 'error' ? 'alert' : 'status'}
+      className={`rounded-xl border p-3 text-sm leading-6 ${tones[tone]}`}
+    >
+      {children}
+    </div>
+  )
+}
+
+export function Tabs<T extends string>({
+  tabs,
+  value,
+  onChange,
+  label,
+}: {
+  tabs: { key: T; label: string; badge?: number }[]
+  value: T
+  onChange: (key: T) => void
+  label: string
+}) {
+  return (
+    <div
+      role="tablist"
+      aria-label={label}
+      className="scrollbar-thin flex gap-1 overflow-x-auto rounded-2xl bg-white p-1 shadow-sm ring-1 ring-slate-200"
+    >
+      {tabs.map((tab) => (
+        <button
+          key={tab.key}
+          type="button"
+          role="tab"
+          aria-selected={value === tab.key}
+          onClick={() => onChange(tab.key)}
+          className={`inline-flex min-h-[40px] shrink-0 items-center gap-2 rounded-xl px-3 text-xs font-bold transition sm:px-4 ${value === tab.key ? 'bg-ink text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+        >
+          {tab.label}
+          {tab.badge ? (
+            <span
+              className={`rounded-md px-1.5 py-0.5 text-[10px] ${value === tab.key ? 'bg-white/20' : 'bg-rose-50 text-rose-700'}`}
+            >
+              {tab.badge}
+            </span>
+          ) : null}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+export function FilePicker({
+  files,
+  onChange,
+  accept = '.pdf,.jpg,.jpeg,.png',
+  label = 'Attach documents (PDF or image, up to 5 MB each)',
+}: {
+  files: File[]
+  onChange: (files: File[]) => void
+  accept?: string
+  label?: string
+}) {
+  return (
+    <div>
+      <label className="flex min-h-[44px] cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 px-3 py-2.5 text-xs font-bold text-slate-600 transition focus-within:ring-2 focus-within:ring-indigo-500/30 hover:border-indigo-400 hover:bg-indigo-50/40">
+        {label}
+        <input
+          type="file"
+          multiple
+          accept={accept}
+          className="sr-only"
+          onChange={(event) => {
+            onChange([...files, ...Array.from(event.target.files ?? [])])
+            event.target.value = ''
+          }}
+        />
+      </label>
+      {files.length > 0 && (
+        <ul className="mt-2 space-y-1">
+          {files.map((file, index) => (
+            <li
+              key={`${file.name}-${index}`}
+              className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-1.5 text-xs text-slate-700"
+            >
+              <span className="truncate">{file.name}</span>
+              <button
+                type="button"
+                className="shrink-0 font-bold text-rose-600"
+                onClick={() => onChange(files.filter((_, other) => other !== index))}
+                aria-label={`Remove ${file.name}`}
+              >
+                Remove
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+export interface Column<T> {
+  label: string
+  render: (row: T) => ReactNode
+  className?: string
+}
+
+// Table on wide screens, stacked cards on phones (no horizontal scroll at 360 px).
+export function DataTable<T>({
+  rows,
+  columns,
+  rowKey,
+  empty,
+}: {
+  rows: T[]
+  columns: Column<T>[]
+  rowKey: (row: T) => string
+  empty: string
+}) {
+  if (!rows.length)
+    return <p className="rounded-xl bg-slate-50 p-4 text-center text-sm text-slate-500">{empty}</p>
+  return (
+    <>
+      <div className="hidden overflow-x-auto md:block">
+        <table className="w-full text-left text-sm">
+          <thead>
+            <tr className="border-b border-slate-100 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+              {columns.map((column) => (
+                <th key={column.label} className={`pb-3 pr-4 ${column.className ?? ''}`}>
+                  {column.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {rows.map((row) => (
+              <tr key={rowKey(row)} className="align-top">
+                {columns.map((column) => (
+                  <td key={column.label} className={`py-3 pr-4 text-slate-700 ${column.className ?? ''}`}>
+                    {column.render(row)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <ul className="space-y-3 md:hidden">
+        {rows.map((row) => (
+          <li key={rowKey(row)} className="rounded-xl border border-slate-100 p-3">
+            <dl className="grid grid-cols-[minmax(0,40%)_minmax(0,1fr)] gap-x-3 gap-y-2 text-sm">
+              {columns.map((column) => (
+                <div key={column.label} className="contents">
+                  <dt className="text-xs text-slate-500">{column.label}</dt>
+                  <dd className="min-w-0 break-words text-slate-800">{column.render(row)}</dd>
+                </div>
+              ))}
+            </dl>
+          </li>
+        ))}
+      </ul>
+    </>
+  )
+}

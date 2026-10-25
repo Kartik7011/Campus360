@@ -1,8 +1,17 @@
 import { useState } from 'react'
 import { BellRing, BriefcaseBusiness, Eye, EyeOff, GraduationCap } from 'lucide-react'
-import { signInLocal, signInRemote, type Role, type Session } from '../auth'
+import {
+  mfaLevel,
+  signInLocal,
+  signInRemote,
+  signInWithProvider,
+  startMfaEnrolment,
+  verifyMfa,
+  type Role,
+  type Session,
+} from '../auth'
 import { supabase } from '../supabase'
-import type { Student } from '../types'
+import type { AppData } from '../types'
 import { useEnterAnimation } from '../useEnterAnimation'
 import { Logo } from './Layout'
 
@@ -16,11 +25,13 @@ const highlights = [
   { icon: BellRing, title: 'Notices & deadlines', text: 'Updates from every office, with time left' },
 ]
 
+const roleLabels: Record<Role, string> = { student: 'Student', parent: 'Parent', staff: 'Staff' }
+
 export function LoginScreen({
-  students,
+  accounts,
   onLogin,
 }: {
-  students: Student[]
+  accounts: Pick<AppData, 'students' | 'staff' | 'consents'>
   onLogin: (session: Session) => void
 }) {
   const heroRef = useEnterAnimation<HTMLDivElement>('login', ':scope > *')
@@ -31,13 +42,19 @@ export function LoginScreen({
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  // staff on the database must pass a second factor before the session counts (NFR-SEC-04)
+  const [mfa, setMfa] = useState<{
+    session: Session
+    enrol?: { factorId: string; qr: string; secret: string }
+  } | null>(null)
+  const [code, setCode] = useState('')
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault()
     let session: Session | null
     try {
       setBusy(true)
-      session = supabase ? await signInRemote(email, password) : signInLocal(email, password, students)
+      session = supabase ? await signInRemote(email, password) : signInLocal(email, password, accounts)
     } catch {
       return setError('Could not reach the server. Check your connection and try again.')
     } finally {
@@ -47,12 +64,33 @@ export function LoginScreen({
     if (session.role !== role) {
       await supabase?.auth.signOut()
       return setError(
-        role === 'admin'
-          ? 'This is a student account. Use the Student tab.'
-          : 'This is an admin account. Use the Admin tab.',
+        `This is a ${roleLabels[session.role].toLowerCase()} account. Use the ${roleLabels[session.role]} tab.`,
       )
     }
+    if (supabase && session.role === 'staff') {
+      try {
+        const level = await mfaLevel()
+        if (level.current !== 'aal2')
+          return setMfa({ session, enrol: level.next === 'aal2' ? undefined : await startMfaEnrolment() })
+      } catch (reason) {
+        return setError((reason as Error).message)
+      }
+    }
     onLogin(session)
+  }
+
+  const submitCode = async (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!mfa) return
+    setBusy(true)
+    try {
+      await verifyMfa(code.trim(), mfa.enrol?.factorId)
+      onLogin(mfa.session)
+    } catch (reason) {
+      setError((reason as Error).message)
+    } finally {
+      setBusy(false)
+    }
   }
 
   const switchRole = (next: Role) => {
@@ -104,15 +142,17 @@ export function LoginScreen({
           <p className="mt-1 text-sm text-slate-500">
             {role === 'student'
               ? 'Sign in with your college email and password.'
-              : 'Placement office and staff access.'}
+              : role === 'parent'
+                ? 'Parents can sign in when the student has turned on parent access.'
+                : 'Exam cell, accounts, placement, faculty and administration.'}
           </p>
 
           <div
-            className="mt-6 grid grid-cols-2 rounded-lg bg-slate-200/70 p-1"
+            className="mt-6 grid grid-cols-3 rounded-lg bg-slate-200/70 p-1"
             role="tablist"
             aria-label="Account type"
           >
-            {(['student', 'admin'] as Role[]).map((item) => (
+            {(['student', 'parent', 'staff'] as Role[]).map((item) => (
               <button
                 key={item}
                 type="button"
@@ -121,80 +161,164 @@ export function LoginScreen({
                 onClick={() => switchRole(item)}
                 className={`h-9 rounded-md text-sm font-medium capitalize transition-colors ${role === item ? 'bg-white text-brand-800 shadow-card' : 'text-slate-600 hover:text-slate-900'}`}
               >
-                {item}
+                {roleLabels[item]}
               </button>
             ))}
           </div>
 
-          <form onSubmit={submit} className="mt-5 space-y-4" noValidate>
-            <div>
-              <label htmlFor="email" className="text-sm font-medium text-slate-700">
-                Email
-              </label>
+          {mfa ? (
+            <form onSubmit={submitCode} className="mt-5 space-y-4" noValidate>
+              <h3 className="text-sm font-semibold text-slate-900">
+                {mfa.enrol ? 'Set up two-step sign-in' : 'Enter your authenticator code'}
+              </h3>
+              {mfa.enrol && (
+                <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-600">
+                  <p>
+                    Staff accounts need a second factor. Scan this with an authenticator app (Google
+                    Authenticator, Microsoft Authenticator), then enter the 6-digit code.
+                  </p>
+                  <img
+                    src={mfa.enrol.qr}
+                    alt="Authenticator setup QR code"
+                    className="mx-auto mt-3 h-40 w-40"
+                  />
+                  <p className="mt-2 break-all text-center text-xs text-slate-500">
+                    Or enter this key: {mfa.enrol.secret}
+                  </p>
+                </div>
+              )}
               <input
-                id="email"
-                type="email"
-                autoComplete="username"
-                required
-                value={email}
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                value={code}
                 onChange={(event) => {
-                  setEmail(event.target.value)
+                  setCode(event.target.value.replace(/\D/g, ''))
                   setError('')
                 }}
-                placeholder={
-                  role === 'student'
-                    ? 'name.surname@galgotiasuniversity.ac.in'
-                    : 'admin@galgotiasuniversity.ac.in'
-                }
-                className="form-input mt-1.5 bg-white"
-                aria-invalid={Boolean(error)}
-                aria-describedby={error ? 'signin-error' : undefined}
+                className="form-input bg-white text-center text-lg tracking-[0.4em]"
+                aria-label="6-digit code"
               />
-            </div>
-            <div>
-              <label htmlFor="password" className="text-sm font-medium text-slate-700">
-                Password
-              </label>
-              <div className="relative mt-1.5">
+              {error && (
+                <p id="signin-error" role="alert" className="text-sm font-medium text-rose-700">
+                  {error}
+                </p>
+              )}
+              <button
+                type="submit"
+                disabled={code.length !== 6 || busy}
+                className="h-11 w-full rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:from-slate-300 disabled:to-slate-300"
+              >
+                {busy ? 'Checking…' : 'Verify and continue'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  void supabase?.auth.signOut()
+                  setMfa(null)
+                  setCode('')
+                }}
+                className="w-full text-sm font-medium text-slate-500 hover:text-slate-800"
+              >
+                Cancel
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={submit} className="mt-5 space-y-4" noValidate>
+              <div>
+                <label htmlFor="email" className="text-sm font-medium text-slate-700">
+                  Email
+                </label>
                 <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  autoComplete="current-password"
+                  id="email"
+                  type="email"
+                  autoComplete="username"
                   required
-                  value={password}
+                  value={email}
                   onChange={(event) => {
-                    setPassword(event.target.value)
+                    setEmail(event.target.value)
                     setError('')
                   }}
-                  className="form-input bg-white pr-12"
+                  placeholder={
+                    role === 'student'
+                      ? 'name.surname@galgotiasuniversity.ac.in'
+                      : role === 'parent'
+                        ? 'The email the student gave for parent access'
+                        : 'office@galgotiasuniversity.ac.in'
+                  }
+                  className="form-input mt-1.5 bg-white"
                   aria-invalid={Boolean(error)}
                   aria-describedby={error ? 'signin-error' : undefined}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((value) => !value)}
-                  className="absolute inset-y-0 right-0 grid w-11 place-items-center text-slate-500 hover:text-slate-800"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                >
-                  {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
-                </button>
               </div>
-            </div>
+              <div>
+                <label htmlFor="password" className="text-sm font-medium text-slate-700">
+                  Password
+                </label>
+                <div className="relative mt-1.5">
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    required
+                    value={password}
+                    onChange={(event) => {
+                      setPassword(event.target.value)
+                      setError('')
+                    }}
+                    className="form-input bg-white pr-12"
+                    aria-invalid={Boolean(error)}
+                    aria-describedby={error ? 'signin-error' : undefined}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((value) => !value)}
+                    className="absolute inset-y-0 right-0 grid w-11 place-items-center text-slate-500 hover:text-slate-800"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                  </button>
+                </div>
+              </div>
 
-            {error && (
-              <p id="signin-error" role="alert" className="text-sm font-medium text-rose-700">
-                {error}
-              </p>
-            )}
+              {error && (
+                <p id="signin-error" role="alert" className="text-sm font-medium text-rose-700">
+                  {error}
+                </p>
+              )}
 
-            <button
-              type="submit"
-              disabled={!email.trim() || !password || busy}
-              className="h-11 w-full rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 text-sm font-semibold text-white shadow-sm shadow-brand-700/30 transition hover:from-brand-700 hover:to-brand-800 active:scale-[0.99] disabled:cursor-not-allowed disabled:from-slate-300 disabled:to-slate-300 disabled:shadow-none"
-            >
-              {busy ? 'Signing in…' : 'Sign in'}
-            </button>
-          </form>
+              <button
+                type="submit"
+                disabled={!email.trim() || !password || busy}
+                className="h-11 w-full rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 text-sm font-semibold text-white shadow-sm shadow-brand-700/30 transition hover:from-brand-700 hover:to-brand-800 active:scale-[0.99] disabled:cursor-not-allowed disabled:from-slate-300 disabled:to-slate-300 disabled:shadow-none"
+              >
+                {busy ? 'Signing in…' : 'Sign in'}
+              </button>
+              {supabase && role !== 'parent' && (
+                <div className="grid gap-2 pt-1 sm:grid-cols-2">
+                  {(
+                    [
+                      ['google', 'Continue with Google'],
+                      ['azure', 'Continue with Microsoft'],
+                    ] as const
+                  ).map(([provider, label]) => (
+                    <button
+                      key={provider}
+                      type="button"
+                      onClick={() =>
+                        void signInWithProvider(provider).then(
+                          ({ error: failed }) => failed && setError(failed.message),
+                        )
+                      }
+                      className="h-11 rounded-xl bg-white text-sm font-semibold text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </form>
+          )}
 
           <p className="mt-8 text-xs leading-5 text-slate-500 lg:hidden">
             Eligibility results are guidance only. Official decisions remain with the college placement cell.

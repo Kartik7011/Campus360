@@ -16,6 +16,7 @@ import type { Company, Opportunity, ResumeAnalysis, ResumeSample, Student } from
 import { analyzeResume, getCompanyByOpportunity } from '../utils'
 import { extractText, RESUME_ACCEPT, ResumeFileError } from '../resumeText'
 import { findSkillEvidence } from '../semantic'
+import { today } from '../ops'
 import { ProgressBar, SectionHeading, StatusBadge } from '../components/ui'
 
 export function ResumeChecker({
@@ -82,7 +83,7 @@ export function ResumeChecker({
         studentId: student.id,
         name: file.name,
         text: await extractText(file),
-        updatedAt: new Date().toISOString().slice(0, 10),
+        updatedAt: today(),
       }
       onSaveResume(resume, file)
       setResumeId(resume.id)

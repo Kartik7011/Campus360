@@ -14,18 +14,74 @@ import {
   Phone,
   Info,
 } from 'lucide-react'
-import type { Company, Mentor, Notice, Opportunity, PlacementApplication, Student, ViewKey } from '../types'
+import type { ViewKey } from '../types'
 import { deadlineLabel, formatDate, getCompanyByOpportunity } from '../utils'
 import { InitialsAvatar, ProgressBar, SectionHeading, StatusBadge } from '../components/ui'
+import { noticeVisibleTo } from '../domain/campus'
+import { canDispute, hallTicketBlockers, recheckState } from '../domain/exams'
+import { balanceDue, chargeStatus } from '../domain/fees'
+import { rupees, today } from '../ops'
+import { useStudent } from '../store'
 
-interface DashboardProps {
-  student: Student
-  mentor: Mentor
-  notices: Notice[]
-  opportunities: Opportunity[]
-  companies: Company[]
-  applications: PlacementApplication[]
-  onNavigate: (view: ViewKey) => void
+const greeting = () => {
+  const hour = new Date().getHours()
+  return hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
+}
+
+// what the student should do next, each with the page that fixes it
+function ActionItems() {
+  const { data, student, navigate } = useStudent()
+  const items: { text: string; view: ViewKey }[] = []
+  for (const session of data.examSessions.filter((item) => item.endsOn >= today()))
+    for (const blocker of hallTicketBlockers(student, session, data))
+      items.push({
+        text: `${session.name}: hall ticket blocked – ${blocker.reason}`,
+        view: blocker.reason.startsWith('Exam fee') ? 'fees' : 'academic',
+      })
+  const due = balanceDue(student.id, data)
+  const overdue = data.charges.filter(
+    (row) => row.studentId === student.id && chargeStatus(row, data) === 'Overdue',
+  ).length
+  if (overdue) items.push({ text: `${overdue} fee(s) overdue – late fees may apply.`, view: 'fees' })
+  else if (due > 0) items.push({ text: `${rupees(due)} in fees outstanding.`, view: 'fees' })
+  const unread = data.notices.filter(
+    (notice) =>
+      notice.mandatory &&
+      noticeVisibleTo(notice, student) &&
+      !data.noticeReads.some((read) => read.noticeId === notice.id && read.studentId === student.id),
+  )
+  if (unread.length)
+    items.push({ text: `${unread.length} notice(s) you must read and acknowledge.`, view: 'notices' })
+  const disputes = data.examAttendance.filter((row) => row.studentId === student.id && canDispute(row, data))
+  if (disputes.length)
+    items.push({
+      text: `You were marked absent in ${disputes.length} paper(s). Dispute it if you were present.`,
+      view: 'exams',
+    })
+  const unpaidRequests = data.rechecks.filter(
+    (row) => row.studentId === student.id && recheckState(row, data) === 'Fee due',
+  )
+  if (unpaidRequests.length)
+    items.push({ text: `${unpaidRequests.length} rechecking request(s) waiting for the fee.`, view: 'fees' })
+  if (!items.length) return null
+  return (
+    <section className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 sm:p-5">
+      <p className="text-sm font-semibold text-amber-950">Needs your attention</p>
+      <ul className="mt-2 space-y-1.5">
+        {items.map((item) => (
+          <li key={item.text}>
+            <button
+              onClick={() => navigate(item.view)}
+              className="flex w-full items-start gap-2 text-left text-sm text-amber-900 hover:underline"
+            >
+              <CircleAlert size={15} className="mt-0.5 shrink-0" />
+              {item.text}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
 }
 
 function MetricCard({
@@ -56,15 +112,11 @@ function MetricCard({
   )
 }
 
-export function Dashboard({
-  student,
-  mentor,
-  notices,
-  opportunities,
-  companies,
-  applications,
-  onNavigate,
-}: DashboardProps) {
+export function Dashboard() {
+  const { data, student, navigate: onNavigate } = useStudent()
+  const { opportunities, companies, applications } = data
+  const mentor = data.mentors.find((item) => item.id === student.mentorId) ?? data.mentors[0]
+  const notices = data.notices.filter((notice) => noticeVisibleTo(notice, student))
   const urgentNotices = [...notices]
     .sort((a, b) => (a.deadline ?? a.date).localeCompare(b.deadline ?? b.date))
     .slice(0, 3)
@@ -83,13 +135,14 @@ export function Dashboard({
 
   return (
     <div className="space-y-7">
+      <ActionItems />
       <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-950 via-brand-900 to-brand-700 px-5 py-6 text-white sm:px-7 sm:py-7">
         <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-brand-500/30 blur-3xl" />
         <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm text-brand-200">{formatDate('2026-10-08', { weekday: 'long' })}</p>
+            <p className="text-sm text-brand-200">{formatDate(today(), { weekday: 'long' })}</p>
             <h2 className="mt-1 font-display text-2xl font-semibold sm:text-3xl">
-              Good morning, {firstName}
+              {greeting()}, {firstName}
             </h2>
           </div>
           <div className="flex gap-2 text-sm">
