@@ -44,11 +44,10 @@ Without a `.env.local` the app runs on the sample data, saved in the browser. To
 ## Database (Supabase)
 
 1. Create a Supabase project.
-2. In the SQL editor, run `supabase/migrations/001_init.sql`, `002_rls.sql` and `003_audit.sql`, in that order.
-3. Under Authentication → Users, add the three accounts from the table above, with passwords of your choice.
-4. Run `supabase/seed.sql` in the SQL editor. It loads the sample data and links each account to its student record or the admin role by email. (After changing `src/data.ts`, regenerate it with `npm run seed:sql`.)
-5. Copy `.env.example` to `.env.local` and fill in the project URL and the **anon** key (Project Settings → API). Never put the service-role key in the front end.
-6. Restart `npm run dev` and sign in.
+2. In the SQL editor, run the four files in `supabase/migrations/` in order, then `supabase/seed.sql` (the sample data; after changing `src/data.ts`, regenerate it with `npm run seed:sql`).
+3. Under Authentication → Users, add the three accounts from the table above with passwords of your choice, ticking **Auto Confirm User**. Each account is linked to its student record or the admin role by email when it is created.
+4. Copy `.env.example` to `.env.local` and fill in the project URL and the **anon** key (Project Settings → API). Never put the service-role key in the front end.
+5. Restart `npm run dev` and sign in.
 
 Row-level security lets a student read only their own record, applications, rechecking requests and resumes; shared tables (notices, companies, openings) are readable by any signed-in user; all other writes are admin-only. Database triggers write every change to student records, notices, openings, applications and rechecking requests into `audit_log`, which the admin sees under **Recent changes**.
 
