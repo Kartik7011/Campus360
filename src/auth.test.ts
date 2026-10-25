@@ -1,7 +1,7 @@
-import { signIn } from './auth'
+import { signInLocal as signIn } from './auth'
 import { seedData } from './data'
 
-describe('signIn', () => {
+describe('signInLocal', () => {
   const students = seedData.students
 
   it('signs a student in with the email on their record', () => {

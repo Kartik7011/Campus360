@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { BellRing, BriefcaseBusiness, Eye, EyeOff, GraduationCap } from 'lucide-react'
-import { signIn, type Role, type Session } from '../auth'
+import { signInLocal, signInRemote, type Role, type Session } from '../auth'
+import { supabase } from '../supabase'
 import type { Student } from '../types'
 import { useEnterAnimation } from '../useEnterAnimation'
 import { Logo } from './Layout'
@@ -29,17 +30,28 @@ export function LoginScreen({
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
 
-  const submit = (event: React.FormEvent) => {
+  const submit = async (event: React.FormEvent) => {
     event.preventDefault()
-    const session = signIn(email, password, students)
+    let session: Session | null
+    try {
+      setBusy(true)
+      session = supabase ? await signInRemote(email, password) : signInLocal(email, password, students)
+    } catch {
+      return setError('Could not reach the server. Check your connection and try again.')
+    } finally {
+      setBusy(false)
+    }
     if (!session) return setError('Email or password is incorrect.')
-    if (session.role !== role)
+    if (session.role !== role) {
+      await supabase?.auth.signOut()
       return setError(
         role === 'admin'
           ? 'This is a student account. Use the Student tab.'
           : 'This is an admin account. Use the Admin tab.',
       )
+    }
     onLogin(session)
   }
 
@@ -177,10 +189,10 @@ export function LoginScreen({
 
             <button
               type="submit"
-              disabled={!email.trim() || !password}
+              disabled={!email.trim() || !password || busy}
               className="h-11 w-full rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 text-sm font-semibold text-white shadow-sm shadow-brand-700/30 transition hover:from-brand-700 hover:to-brand-800 active:scale-[0.99] disabled:cursor-not-allowed disabled:from-slate-300 disabled:to-slate-300 disabled:shadow-none"
             >
-              Sign in
+              {busy ? 'Signing in…' : 'Sign in'}
             </button>
           </form>
 

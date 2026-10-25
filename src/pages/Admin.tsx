@@ -8,13 +8,16 @@ import {
   ChevronDown,
   Edit3,
   FileSearch,
+  History,
   Plus,
+  RefreshCw,
   Save,
   Settings2,
   Trash2,
   UsersRound,
 } from 'lucide-react'
 import type {
+  AuditEntry,
   Company,
   Notice,
   NoticeCategory,
@@ -25,9 +28,9 @@ import type {
   Student,
 } from '../types'
 import { formatDate, getCompanyByOpportunity } from '../utils'
-import { InitialsAvatar, Modal, SectionHeading, StatusBadge } from '../components/ui'
+import { EmptyState, InitialsAvatar, Modal, SectionHeading, StatusBadge } from '../components/ui'
 
-type AdminTab = 'students' | 'notices' | 'opportunities' | 'stages' | 'rechecks'
+type AdminTab = 'students' | 'notices' | 'opportunities' | 'stages' | 'rechecks' | 'audit'
 
 interface AdminProps {
   students: Student[]
@@ -36,6 +39,8 @@ interface AdminProps {
   opportunities: Opportunity[]
   applications: PlacementApplication[]
   rechecks: RecheckRequest[]
+  // only set when a database is connected; the audit log is written by database triggers
+  loadAuditLog?: () => Promise<AuditEntry[]>
   onUpdateStudent: (id: string, patch: Partial<Student>) => void
   onAddNotice: (notice: Notice) => void
   onRemoveNotice: (id: string) => void
@@ -53,6 +58,7 @@ export function Admin({
   opportunities,
   applications,
   rechecks,
+  loadAuditLog,
   onUpdateStudent,
   onAddNotice,
   onRemoveNotice,
@@ -89,7 +95,9 @@ export function Admin({
     { key: 'opportunities' as const, label: 'Opportunities', icon: BriefcaseBusiness },
     { key: 'stages' as const, label: 'Placement stages', icon: Activity },
     { key: 'rechecks' as const, label: 'Rechecking', icon: FileSearch },
+    { key: 'audit' as const, label: 'Recent changes', icon: History },
   ]
+  const today = new Date().toISOString().slice(0, 10)
 
   const saveNotice = () => {
     if (!noticeDraft.title.trim() || !noticeDraft.summary.trim()) return
@@ -99,7 +107,7 @@ export function Admin({
       category: noticeDraft.category,
       priority: noticeDraft.priority,
       summary: noticeDraft.summary.trim(),
-      date: '2026-10-08',
+      date: today,
       deadline: noticeDraft.deadline || undefined,
       audience: 'All students',
       source: 'Admin panel',
@@ -117,7 +125,7 @@ export function Admin({
       location: opportunityDraft.location.trim() || 'Campus / India',
       workMode: 'On-site',
       deadline: opportunityDraft.deadline || '2026-10-31',
-      posted: '2026-10-08',
+      posted: today,
       minCgpa: Number(opportunityDraft.minCgpa) || null,
       allowedBranches: opportunityDraft.branches
         .split(',')
@@ -153,8 +161,8 @@ export function Admin({
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <p className="max-w-2xl text-sm leading-6 text-slate-600">
-            Edit student records, add notices or opportunities, and move applications through stages. Changes
-            persist in this browser.
+            Edit student records, add notices or opportunities, and move applications through stages.
+            {loadAuditLog ? ' Every change is saved and logged.' : ' Changes persist in this browser.'}
           </p>
         </div>
         <div className="inline-flex items-center gap-2 self-start rounded-full bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700 sm:self-auto">
@@ -162,12 +170,14 @@ export function Admin({
         </div>
       </div>
 
-      <section className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 sm:p-5">
-        <p className="text-xs leading-5 text-amber-900">
-          <span className="font-bold">Note:</span> changes are saved in this browser only. This panel is not
-          yet connected to the university student information system or placement portal.
-        </p>
-      </section>
+      {!loadAuditLog && (
+        <section className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 sm:p-5">
+          <p className="text-xs leading-5 text-amber-900">
+            <span className="font-bold">Note:</span> changes are saved in this browser only. This panel is not
+            yet connected to the university student information system or placement portal.
+          </p>
+        </section>
+      )}
 
       <div className="flex gap-1 overflow-x-auto rounded-2xl bg-white p-1 shadow-sm ring-1 ring-slate-200">
         {tabs.map(({ key, label, icon: Icon }) => (
@@ -201,12 +211,14 @@ export function Admin({
           applications={applications}
           opportunities={opportunities}
           companies={companies}
+          students={students}
           onUpdateStage={onUpdateStage}
         />
       )}
       {tab === 'rechecks' && (
         <RecheckManager rechecks={rechecks} students={students} onUpdate={onUpdateRecheck} />
       )}
+      {tab === 'audit' && <AuditLog load={loadAuditLog} />}
 
       <StudentEditModal
         student={editStudent}
@@ -459,46 +471,55 @@ function NoticeManager({
           </button>
         }
       />
-      <div className="mt-5 overflow-x-auto">
-        <table className="w-full min-w-[680px] text-left">
-          <thead>
-            <tr className="border-b border-slate-100 text-[11px] text-slate-500">
-              <th className="pb-3 pr-4">Notice</th>
-              <th className="pb-3 pr-4">Category</th>
-              <th className="pb-3 pr-4">Priority</th>
-              <th className="pb-3">Action</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {notices.map((notice) => (
-              <tr key={notice.id}>
-                <td className="py-4 pr-4">
-                  <p className="text-sm font-bold text-slate-800">{notice.title}</p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {notice.deadline ? `Deadline ${formatDate(notice.deadline)}` : 'No deadline'}
-                  </p>
-                </td>
-                <td className="py-4 pr-4">
-                  <StatusBadge tone="blue">{notice.category}</StatusBadge>
-                </td>
-                <td className="py-4 pr-4">
-                  <StatusBadge tone={notice.priority === 'High' ? 'red' : 'amber'}>
-                    {notice.priority}
-                  </StatusBadge>
-                </td>
-                <td className="py-4">
-                  <button
-                    onClick={() => onRemove(notice.id)}
-                    className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-bold text-rose-600 transition hover:bg-rose-50"
-                  >
-                    <Trash2 size={14} /> Remove
-                  </button>
-                </td>
+      {notices.length === 0 ? (
+        <div className="mt-5">
+          <EmptyState
+            title="No notices published"
+            description="Notices you add appear here and on the student view."
+          />
+        </div>
+      ) : (
+        <div className="mt-5 overflow-x-auto">
+          <table className="w-full min-w-[680px] text-left">
+            <thead>
+              <tr className="border-b border-slate-100 text-[11px] text-slate-500">
+                <th className="pb-3 pr-4">Notice</th>
+                <th className="pb-3 pr-4">Category</th>
+                <th className="pb-3 pr-4">Priority</th>
+                <th className="pb-3">Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {notices.map((notice) => (
+                <tr key={notice.id}>
+                  <td className="py-4 pr-4">
+                    <p className="text-sm font-bold text-slate-800">{notice.title}</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {notice.deadline ? `Deadline ${formatDate(notice.deadline)}` : 'No deadline'}
+                    </p>
+                  </td>
+                  <td className="py-4 pr-4">
+                    <StatusBadge tone="blue">{notice.category}</StatusBadge>
+                  </td>
+                  <td className="py-4 pr-4">
+                    <StatusBadge tone={notice.priority === 'High' ? 'red' : 'amber'}>
+                      {notice.priority}
+                    </StatusBadge>
+                  </td>
+                  <td className="py-4">
+                    <button
+                      onClick={() => onRemove(notice.id)}
+                      className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-bold text-rose-600 transition hover:bg-rose-50"
+                    >
+                      <Trash2 size={14} /> Remove
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </section>
   )
 }
@@ -616,11 +637,13 @@ function StageManager({
   applications,
   opportunities,
   companies,
+  students,
   onUpdateStage,
 }: {
   applications: PlacementApplication[]
   opportunities: Opportunity[]
   companies: Company[]
+  students: Student[]
   onUpdateStage: (id: string, stage: PlacementStage) => void
 }) {
   return (
@@ -630,10 +653,17 @@ function StageManager({
         description="Move applications through the pipeline so the student tracker stays current."
       />
       <div className="mt-5 space-y-3">
+        {applications.length === 0 && (
+          <EmptyState
+            title="No applications yet"
+            description="Applications appear here once students apply."
+          />
+        )}
         {applications.map((application) => {
           const opportunity = opportunities.find((item) => item.id === application.opportunityId)
           const company = opportunity ? getCompanyByOpportunity(opportunity, companies) : undefined
-          const studentLabel = application.studentId === 'kartik' ? 'Kartik Chauhan' : 'Shreyansh Pandey'
+          const studentLabel =
+            students.find((student) => student.id === application.studentId)?.name ?? application.studentId
           return (
             <div
               key={application.id}
@@ -693,6 +723,9 @@ function RecheckManager({
         description="Update the status and remarks so students can see where their request stands."
       />
       <div className="mt-5 space-y-3">
+        {rechecks.length === 0 && (
+          <EmptyState title="No rechecking requests" description="Requests filed by students appear here." />
+        )}
         {rechecks.map((request) => (
           <div
             key={request.id}
@@ -725,10 +758,15 @@ function RecheckManager({
                 className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"
               />
             </div>
+            {/* saved when the field loses focus, so typing doesn't write once per key */}
             <input
               aria-label={`Remarks for ${request.subject}`}
-              value={request.remarks}
-              onChange={(event) => onUpdate(request.id, { remarks: event.target.value })}
+              key={request.remarks}
+              defaultValue={request.remarks}
+              onBlur={(event) => {
+                const remarks = event.target.value.trim()
+                if (remarks !== request.remarks) onUpdate(request.id, { remarks })
+              }}
               className="form-input text-xs"
             />
           </div>
@@ -736,6 +774,106 @@ function RecheckManager({
       </div>
     </section>
   )
+}
+
+function AuditLog({ load }: { load?: () => Promise<AuditEntry[]> }) {
+  const [entries, setEntries] = useState<AuditEntry[] | null>(null)
+  const [error, setError] = useState('')
+
+  const refresh = () => {
+    if (!load) return
+    setEntries(null)
+    setError('')
+    load()
+      .then(setEntries)
+      .catch((reason: Error) => setError(reason.message))
+  }
+  useEffect(refresh, [load])
+
+  return (
+    <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card sm:p-6">
+      <SectionHeading
+        title="Recent changes"
+        description="The latest 50 edits to student records, notices, openings, applications and rechecking requests."
+        action={
+          load && (
+            <button
+              onClick={refresh}
+              className="inline-flex items-center gap-2 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-600 ring-1 ring-slate-200 transition hover:bg-slate-50"
+            >
+              <RefreshCw size={14} /> Refresh
+            </button>
+          )
+        }
+      />
+      <div className="mt-5">
+        {!load ? (
+          <EmptyState
+            icon={<History size={20} />}
+            title="The change log needs the database"
+            description="Edits are logged by the database. In browser-only mode there is no log to show."
+          />
+        ) : error ? (
+          <div
+            role="alert"
+            className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900"
+          >
+            Couldn’t load the change log. {error}{' '}
+            <button onClick={refresh} className="font-bold underline">
+              Try again
+            </button>
+          </div>
+        ) : !entries ? (
+          <div className="space-y-3" aria-label="Loading">
+            {[0, 1, 2].map((item) => (
+              <div key={item} className="h-14 animate-pulse rounded-2xl bg-slate-100" />
+            ))}
+          </div>
+        ) : entries.length === 0 ? (
+          <EmptyState
+            icon={<History size={20} />}
+            title="No changes yet"
+            description="Edits will appear here."
+          />
+        ) : (
+          <ul className="divide-y divide-slate-100">
+            {entries.map((entry) => (
+              <li
+                key={entry.id}
+                className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-slate-800">
+                    <span className="capitalize">{entry.action}</span> · {entry.tableName.replace(/_/g, ' ')}{' '}
+                    <span className="font-normal text-slate-500">{entry.rowId}</span>
+                  </p>
+                  <p className="mt-0.5 truncate text-xs text-slate-500">
+                    {entry.actorEmail ?? 'System'}
+                    {entry.action === 'update' &&
+                      changedFields(entry) &&
+                      ` · changed ${changedFields(entry)}`}
+                  </p>
+                </div>
+                <time dateTime={entry.at} className="shrink-0 text-xs text-slate-500">
+                  {new Date(entry.at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                </time>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </section>
+  )
+}
+
+// e.g. "status, remarks" for an update that changed those two columns
+export function changedFields(entry: Pick<AuditEntry, 'old' | 'new'>) {
+  const { old, new: next } = entry
+  if (!old || !next) return ''
+  return Object.keys(next)
+    .filter((key) => JSON.stringify(old[key]) !== JSON.stringify(next[key]))
+    .map((key) => key.replace(/_/g, ' '))
+    .join(', ')
 }
 
 function StudentEditModal({

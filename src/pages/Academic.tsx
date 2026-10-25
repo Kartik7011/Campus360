@@ -222,6 +222,13 @@ export function Academic({
                     </td>
                   </tr>
                 ))}
+                {studentRechecks.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="py-8 text-center text-sm text-slate-500">
+                      You have no rechecking requests. Use the form above to file one.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

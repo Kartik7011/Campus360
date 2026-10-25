@@ -131,14 +131,37 @@ export interface ResumeCategory {
   note: string
 }
 
+export type ScoringVersion = 'v1-keyword' | 'v2-semantic'
+
+// the resume line that best matches a skill, and its cosine similarity (0–1)
+export interface SkillEvidence {
+  line: string
+  similarity: number
+}
+
 export interface ResumeAnalysis {
   score: number
+  scoringVersion: ScoringVersion
+  // skills credited only through semantic evidence (the exact term is not in the resume)
+  semanticMatches: { skill: string; line: string; similarity: number }[]
   categories: ResumeCategory[]
   matchedSkills: string[]
   missingSkills: string[]
   strengths: string[]
   weakAreas: string[]
   suggestions: string[]
+}
+
+export interface AuditEntry {
+  id: number
+  actor: string | null
+  actorEmail: string | null
+  tableName: string
+  rowId: string | null
+  action: 'insert' | 'update' | 'delete'
+  old: Record<string, unknown> | null
+  new: Record<string, unknown> | null
+  at: string
 }
 
 export interface AppData {

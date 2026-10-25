@@ -6,8 +6,13 @@ import type {
   RecheckRequest,
   ResumeAnalysis,
   ResumeCategory,
+  SkillEvidence,
   Student,
 } from './types'
+
+// shortcut: picked from ~25 spot-checked pairs (ReactJS↔React 0.87, NodeJS↔Node.js 0.93, Vue.js↔React 0.37,
+// MySQL↔SQL 0.68); calibrate on hand-labelled (skill, phrase) pairs before reporting v2 results.
+export const SEMANTIC_THRESHOLD = 0.75
 
 export function getCompanyByOpportunity(opportunity: Opportunity, companies: Company[]) {
   return companies.find((company) => company.id === opportunity.companyId)
@@ -214,17 +219,28 @@ function categoryNote(score: number, strong: string, improve: string) {
   return improve
 }
 
+// Without semanticEvidence this is the v1 keyword checker. With it (v2), a skill also counts as matched when
+// a resume phrase is close enough in meaning; everything else is scored the same way in both versions.
 export function analyzeResume(
   resumeText: string,
   opportunity: Opportunity,
   student: Student,
+  semanticEvidence?: Record<string, SkillEvidence>,
 ): ResumeAnalysis {
   const text = normalized(resumeText)
   const required = opportunity.requiredSkills
   const preferred = opportunity.preferredSkills
-  const matchedSkills = required.filter((skill) => hasTerm(text, skill))
-  const missingSkills = required.filter((skill) => !hasTerm(text, skill))
-  const matchedPreferred = preferred.filter((skill) => hasTerm(text, skill))
+  const semanticMatches: ResumeAnalysis['semanticMatches'] = []
+  const hasSkill = (skill: string) => {
+    if (hasTerm(text, skill)) return true
+    const evidence = semanticEvidence?.[skill]
+    if (!evidence || evidence.similarity < SEMANTIC_THRESHOLD) return false
+    if (!semanticMatches.some((match) => match.skill === skill)) semanticMatches.push({ skill, ...evidence })
+    return true
+  }
+  const matchedSkills = required.filter(hasSkill)
+  const missingSkills = required.filter((skill) => !hasSkill(skill))
+  const matchedPreferred = preferred.filter(hasSkill)
   const requiredScore = safePercent(matchedSkills.length, required.length, 100)
 
   const projectTerms = [opportunity.title, ...required, ...preferred]
@@ -414,7 +430,17 @@ export function analyzeResume(
     'Use this score as an editing guide, then ask your mentor or placement cell for a human review.',
   ]
 
-  return { score, categories, matchedSkills, missingSkills, strengths, weakAreas, suggestions }
+  return {
+    score,
+    scoringVersion: semanticEvidence ? 'v2-semantic' : 'v1-keyword',
+    semanticMatches,
+    categories,
+    matchedSkills,
+    missingSkills,
+    strengths,
+    weakAreas,
+    suggestions,
+  }
 }
 
 export function createRecheckRequest(

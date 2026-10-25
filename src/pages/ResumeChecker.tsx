@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import {
   AlertTriangle,
   CheckCircle2,
@@ -8,11 +8,14 @@ import {
   Lightbulb,
   SearchCheck,
   Info,
+  Loader2,
+  Sparkles,
   UploadCloud,
-  X,
 } from 'lucide-react'
 import type { Company, Opportunity, ResumeAnalysis, ResumeSample, Student } from '../types'
 import { analyzeResume, getCompanyByOpportunity } from '../utils'
+import { extractText, RESUME_ACCEPT, ResumeFileError } from '../resumeText'
+import { findSkillEvidence } from '../semantic'
 import { ProgressBar, SectionHeading, StatusBadge } from '../components/ui'
 
 export function ResumeChecker({
@@ -21,12 +24,16 @@ export function ResumeChecker({
   opportunities,
   resumes,
   initialOpportunityId,
+  onSaveResume,
+  onAnalyzed,
 }: {
   student: Student
   companies: Company[]
   opportunities: Opportunity[]
   resumes: ResumeSample[]
   initialOpportunityId?: string
+  onSaveResume: (resume: ResumeSample, file: File) => void
+  onAnalyzed?: (opportunityId: string, analysis: ResumeAnalysis) => void
 }) {
   const studentResumes = resumes.filter((resume) => resume.studentId === student.id)
   const defaultOpportunity =
@@ -37,7 +44,15 @@ export function ResumeChecker({
   const [resumeId, setResumeId] = useState(studentResumes[0]?.id ?? '')
   const [resumeText, setResumeText] = useState(studentResumes[0]?.text ?? '')
   const [analysis, setAnalysis] = useState<ResumeAnalysis | null>(null)
-  const [fileName, setFileName] = useState('')
+  const [uploadStatus, setUploadStatus] = useState<{ busy: boolean; error: string }>({
+    busy: false,
+    error: '',
+  })
+  const [useSemantic, setUseSemantic] = useState(true)
+  const [running, setRunning] = useState(false)
+  const [semanticFailed, setSemanticFailed] = useState(false)
+  // bumped whenever the inputs change, so a slow semantic run can't show a report for old inputs
+  const runId = useRef(0)
 
   const opportunity = opportunities.find((item) => item.id === opportunityId) ?? opportunities[0]
   const company = opportunity ? getCompanyByOpportunity(opportunity, companies) : undefined
@@ -47,22 +62,62 @@ export function ResumeChecker({
     if (!resume) return
     setResumeId(id)
     setResumeText(resume.text)
-    setFileName('')
+    resetReport()
+  }
+
+  const resetReport = () => {
+    runId.current++
     setAnalysis(null)
+    setRunning(false)
   }
 
   const handleFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
+    event.target.value = '' // lets the same file be chosen again after an error
     if (!file) return
-    const text = await file.text()
-    setResumeId('')
-    setFileName(file.name)
-    setResumeText(text)
-    setAnalysis(null)
+    setUploadStatus({ busy: true, error: '' })
+    try {
+      const resume: ResumeSample = {
+        id: `resume-${student.id}-${Date.now()}`,
+        studentId: student.id,
+        name: file.name,
+        text: await extractText(file),
+        updatedAt: new Date().toISOString().slice(0, 10),
+      }
+      onSaveResume(resume, file)
+      setResumeId(resume.id)
+      setResumeText(resume.text)
+      resetReport()
+      setUploadStatus({ busy: false, error: '' })
+    } catch (error) {
+      setUploadStatus({
+        busy: false,
+        error: error instanceof ResumeFileError ? error.message : 'This file could not be read.',
+      })
+    }
   }
 
-  const runAnalysis = () => {
-    if (opportunity && resumeText.trim()) setAnalysis(analyzeResume(resumeText, opportunity, student))
+  const runAnalysis = async () => {
+    if (!opportunity || !resumeText.trim()) return
+    const id = ++runId.current
+    let evidence
+    setSemanticFailed(false)
+    if (useSemantic) {
+      setRunning(true)
+      try {
+        evidence = await findSkillEvidence(resumeText, [
+          ...opportunity.requiredSkills,
+          ...opportunity.preferredSkills,
+        ])
+      } catch {
+        setSemanticFailed(true) // offline or the model failed to load: fall back to exact matching
+      }
+    }
+    if (id !== runId.current) return
+    const result = analyzeResume(resumeText, opportunity, student, evidence)
+    setRunning(false)
+    setAnalysis(result)
+    onAnalyzed?.(opportunity.id, result)
   }
 
   const groupedCategories = useMemo(() => analysis?.categories ?? [], [analysis])
@@ -107,7 +162,7 @@ export function ResumeChecker({
               value={opportunityId}
               onChange={(event) => {
                 setOpportunityId(event.target.value)
-                setAnalysis(null)
+                resetReport()
               }}
               className="h-12 w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-3 pr-10 text-sm font-semibold text-slate-800 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
             >
@@ -156,22 +211,7 @@ export function ResumeChecker({
           )}
 
           <div className="border-t border-slate-100 pt-5">
-            <div className="flex items-center justify-between gap-3">
-              <label className="text-xs font-medium text-slate-500">2 · Choose resume</label>
-              {fileName && (
-                <button
-                  onClick={() => {
-                    setFileName('')
-                    setResumeText('')
-                    setResumeId('')
-                    setAnalysis(null)
-                  }}
-                  className="inline-flex items-center gap-1 text-xs font-bold text-rose-600"
-                >
-                  <X size={13} /> Clear upload
-                </button>
-              )}
-            </div>
+            <label className="text-xs font-medium text-slate-500">2 · Choose resume</label>
             <div className="mt-3 space-y-2">
               {studentResumes.map((resume) => (
                 <button
@@ -192,11 +232,22 @@ export function ResumeChecker({
                 </button>
               ))}
             </div>
-            <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 px-3 py-3 text-xs font-bold text-slate-600 transition hover:border-indigo-400 hover:bg-indigo-50/40 hover:text-indigo-700">
-              <UploadCloud size={15} />
-              {fileName || 'Upload a .txt resume'}
-              <input type="file" accept=".txt,text/plain" className="sr-only" onChange={handleFile} />
+            <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 px-3 py-3 text-xs font-bold text-slate-600 transition focus-within:ring-2 focus-within:ring-indigo-500/30 hover:border-indigo-400 hover:bg-indigo-50/40 hover:text-indigo-700">
+              {uploadStatus.busy ? <Loader2 size={15} className="animate-spin" /> : <UploadCloud size={15} />}
+              {uploadStatus.busy ? 'Reading file…' : 'Upload a resume (PDF, DOCX or TXT, up to 2 MB)'}
+              <input
+                type="file"
+                accept={RESUME_ACCEPT}
+                className="sr-only"
+                onChange={handleFile}
+                disabled={uploadStatus.busy}
+              />
             </label>
+            {uploadStatus.error && (
+              <p role="alert" className="mt-2 text-xs font-medium text-rose-700">
+                {uploadStatus.error}
+              </p>
+            )}
           </div>
 
           <div className="border-t border-slate-100 pt-5">
@@ -209,18 +260,40 @@ export function ResumeChecker({
               onChange={(event) => {
                 setResumeText(event.target.value)
                 setResumeId('')
-                setFileName('')
-                setAnalysis(null)
+                resetReport()
               }}
               className="mt-3 min-h-[190px] w-full resize-y rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
               placeholder="Paste plain-text resume content here..."
             />
+            <label className="mt-3 flex items-start gap-2.5 text-xs leading-5 text-slate-600">
+              <input
+                type="checkbox"
+                checked={useSemantic}
+                onChange={(event) => {
+                  setUseSemantic(event.target.checked)
+                  resetReport()
+                }}
+                className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-indigo-600"
+              />
+              <span>
+                <span className="font-semibold text-slate-800">Match skills by meaning</span>, so “ReactJS”
+                counts for React. Downloads a 23 MB model the first time; your resume stays on this device.
+              </span>
+            </label>
             <button
-              disabled={!opportunity || !resumeText.trim()}
+              disabled={!opportunity || !resumeText.trim() || running}
               onClick={runAnalysis}
               className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-ink px-4 py-3 text-sm font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <SearchCheck size={17} /> {analysis ? 'Re-run match check' : 'Run match check'}
+              {running ? (
+                <>
+                  <Loader2 size={17} className="animate-spin" /> Matching skills…
+                </>
+              ) : (
+                <>
+                  <SearchCheck size={17} /> {analysis ? 'Re-run match check' : 'Run match check'}
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -250,6 +323,7 @@ export function ResumeChecker({
               opportunity={opportunity}
               company={company}
               categories={groupedCategories}
+              semanticFailed={semanticFailed}
             />
           )}
         </div>
@@ -263,20 +337,34 @@ function AnalysisReport({
   opportunity,
   company,
   categories,
+  semanticFailed,
 }: {
   analysis: ResumeAnalysis
   opportunity?: Opportunity
   company?: Company
   categories: ResumeAnalysis['categories']
+  semanticFailed: boolean
 }) {
   return (
     <div className="space-y-5">
+      {semanticFailed && (
+        <p
+          role="status"
+          className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs leading-5 text-amber-900"
+        >
+          The meaning-based matcher couldn’t load (you may be offline), so this report uses exact keyword
+          matching only.
+        </p>
+      )}
       <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
         <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-center">
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-md bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
                 Match report
+              </span>
+              <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                {analysis.scoringVersion === 'v2-semantic' ? 'Keywords + meaning' : 'Exact keywords'}
               </span>
               {company && (
                 <span className="text-xs font-medium text-slate-500">
@@ -342,6 +430,29 @@ function AnalysisReport({
           ))}
         </div>
       </section>
+
+      {analysis.semanticMatches.length > 0 && (
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card sm:p-6">
+          <div className="flex items-center gap-2 text-slate-800">
+            <Sparkles size={18} className="text-indigo-600" />
+            <h3 className="font-display font-bold">Skills matched by meaning</h3>
+          </div>
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            These skills are not written word for word, but this phrase from your resume was close enough. Use
+            the exact term too if it truthfully applies.
+          </p>
+          <ul className="mt-4 space-y-2">
+            {analysis.semanticMatches.map((match) => (
+              <li key={match.skill} className="flex flex-wrap items-baseline gap-x-2 text-sm text-slate-700">
+                <span className="font-bold text-slate-900">{match.skill}</span>
+                <span className="text-slate-500">←</span>
+                <span>“{match.line}”</span>
+                <span className="text-xs text-slate-500">similarity {match.similarity.toFixed(2)}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <div className="grid gap-5 md:grid-cols-2">
         <section className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-5 sm:p-6">
