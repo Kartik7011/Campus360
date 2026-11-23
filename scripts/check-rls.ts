@@ -1,4 +1,4 @@
-// Checks a non-production Supabase project using short-lived OAuth access tokens.
+// Checks a non-production Supabase project using short-lived access tokens from provisioned test accounts.
 // Run with: KARTIK_ACCESS_TOKEN=... STAFF_EMAIL=... STAFF_AAL1_ACCESS_TOKEN=... npm run check:rls
 import { createClient } from '@supabase/supabase-js'
 

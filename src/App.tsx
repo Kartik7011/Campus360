@@ -11,7 +11,7 @@ import { Profile, PrivacyConsent } from './pages/Profile'
 import { Results } from './pages/Results'
 import { ResumeChecker } from './pages/ResumeChecker'
 import { Verify } from './pages/Verify'
-import { LoginScreen } from './components/LoginScreen'
+import { LoginScreen, PasswordRecoveryScreen } from './components/LoginScreen'
 import { AppShell } from './components/Layout'
 import { restoreRemoteSession, type Session } from './auth'
 import { api, applyRemote, loadRemoteData } from './api'
@@ -51,12 +51,26 @@ const verifySerial = () => /^#\/verify\/([A-Z0-9-]+)$/i.exec(window.location.has
 
 export default function App() {
   const [serial, setSerial] = useState(verifySerial)
+  const [passwordRecovery, setPasswordRecovery] = useState(
+    () => new URLSearchParams(window.location.search).get('password-recovery') === '1',
+  )
   useEffect(() => {
     const onHash = () => setSerial(verifySerial())
     window.addEventListener('hashchange', onHash)
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
   if (!remote && !demoMode) return <ConfigurationRequired />
+  if (passwordRecovery && remote)
+    return (
+      <PasswordRecoveryScreen
+        onBack={() => {
+          const url = new URL(window.location.href)
+          url.searchParams.delete('password-recovery')
+          window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`)
+          setPasswordRecovery(false)
+        }}
+      />
+    )
   return serial ? (demoMode ? <DemoVerify serial={serial} /> : <Verify serial={serial} data={null} />) : <SignedInApp />
 }
 

@@ -81,15 +81,15 @@ To run the local sample experience, copy `.env.example` to `.env.local`, leave t
 ### New project
 
 1. Create a Supabase project in the **Mumbai** region or the university-approved India region.
-2. In the SQL editor, run all six files in `supabase/migrations/` in order. **Do not run `supabase/seed.sql` in a production project**; it contains synthetic student, staff, marks, fee and placement records.
-3. Configure the university Google/Microsoft OAuth tenant and allowed redirect URLs. Restrict OAuth to university-managed identities. Production student and staff sessions must use OAuth/SAML plus staff TOTP MFA. Parents use a one-time email link and must be provisioned against an active consent record. Password sessions are denied data access by production RLS.
+2. In the SQL editor, run all seven files in `supabase/migrations/` in order. **Do not run `supabase/seed.sql` in a production project**; it contains synthetic student, staff, marks, fee and placement records.
+3. Enable Supabase email/password authentication for university-provisioned student and staff accounts. Configure verified email, a 12-character minimum password, password reset redirects, rate limits, and university-controlled SMTP. Staff must complete TOTP MFA. Parents use a one-time email link and must be provisioned against an active consent record.
 4. Replace the sample `staff-admin` record with the university's actual IT administrator before provisioning auth accounts. Load reviewed university data through the institution's authorized process.
 5. Copy `.env.example` to `.env.local` for local development. Use only the project URL and **anon / publishable** key in the client build. Never put the service-role or secret key in the front end.
 6. Apply the auth, database, storage and recovery settings in [production deployment](docs/production-deployment.md) before opening access to students.
 
 ### Upgrading a project set up with migrations 001–004
 
-Run `supabase/migrations/005_full_platform.sql` and `006_production_security.sql` in order. Never run the sample seed against production. Replace sample role rows with real staff records and provision production identities with university SSO and parent email links.
+Run `supabase/migrations/005_full_platform.sql`, `006_production_security.sql`, and `007_provisioned_password_auth.sql` in order. Never run the sample seed against production. Replace sample role rows with real staff records and provision student/staff identities and parent email links through the university's approved account process.
 
 ### What the database enforces
 
@@ -104,7 +104,7 @@ To check the live policies from your machine:
 KARTIK_ACCESS_TOKEN=... STAFF_EMAIL=exam.rakesh@galgotiasuniversity.ac.in STAFF_AAL1_ACCESS_TOKEN=... npm run check:rls
 ```
 
-Use short-lived OAuth tokens from a non-production project only. Never place real tokens in the repository or shell history.
+Use short-lived tokens from provisioned test accounts in a non-production project only. Never place real tokens in the repository or shell history.
 
 | Command | What it does |
 |---|---|
@@ -126,7 +126,7 @@ src/
   policy.ts     University rules (fees, windows, thresholds) in one place
   ops.ts        Row changes a workflow returns, applied to state, the database and the audit log
   api.ts        Database reads and writes (Supabase)
-  auth.ts       Sign-in, SSO and MFA
+  auth.ts       University-provisioned sign-in, password recovery and MFA
   demoAuth.ts   Sample sign-in credentials for local development only
   pdf.ts        Grade sheets, receipts, hall tickets and certificates with QR verification
   data.ts       Sample records
@@ -142,14 +142,14 @@ Workflows return the row changes they need instead of writing anywhere, so they 
 - **Payments are disabled in production.** The portal displays fee records but cannot initiate a payment or send a refund. The local demo payment simulation cannot be called through production RLS.
 - **In-app notifications only.** Email, SMS and push need the university's messaging providers.
 - **Not tuned for 40,000 students yet.** Remote reads now page through responses rather than silently stopping at 10,000 rows, but authorized staff collections are still materialized in browser memory. Collection-specific server-side paging/search and load testing remain required before full scale.
-- **Google/Microsoft sign-in** must be configured for university tenants before production. Production students/staff cannot use passwords; parent access uses a provisioned one-time email link.
+- **Account provisioning and email delivery** must be operated by university IT. Students/staff sign in with provisioned email/password accounts; staff also use TOTP MFA. Parents use a provisioned one-time email link.
 - **Not built:** Hindi, DigiLocker/APAAR integration, malware scanning of uploads, invigilator QR app, monitoring and alerting, a separate staging environment.
 - Browser-only demo mode is explicitly opt-in in local development, keeps sample data in the browser and never stores original upload files. It is for trying the app with sample data only.
 - Meaning-based skill matching downloads a 23 MB model once; its 0.75 threshold still needs calibrating on labelled examples.
 
 ## Production release gates
 
-The app fails closed to a configuration screen when Supabase is missing, production student/staff sign-in is university SSO only, parent sign-in uses an email link, and payment initiation is disabled. The repository contains no active university deployment configuration or production credentials, so an authorized university team still needs to complete these release gates:
+The app fails closed to a configuration screen when Supabase is missing, production student/staff sign-in uses university-provisioned email/password accounts with staff MFA, parent sign-in uses an email link, and payment initiation is disabled. The repository contains no active university deployment configuration or production credentials, so an authorized university team still needs to complete these release gates:
 
 - Provision and review a production Supabase project in the approved India region; configure backups, recovery, retention, and production-only credentials.
 - Import institution-approved student and staff records securely before access opens. ERP integration is out of scope for this release; define a verified manual data refresh and correction process.

@@ -305,7 +305,7 @@ Attendance in exam halls is marked on signed paper sheets. Campus360 must digiti
 
 | ID | Pri | Requirement |
 |---|---|---|
-| NFR-SEC-03 | M | Single sign-on with university Google/Microsoft accounts; no separate passwords. |
+| NFR-SEC-03 | M | Student and staff accounts are provisioned by university IT and authenticate with email/password; parent accounts use consent-linked one-time email links. Staff access also requires MFA. |
 | NFR-SEC-04 | M | Multi-factor authentication for all staff roles. |
 | NFR-SEC-05 | M | Access rules enforced on the server/database, never only in the browser. |
 | NFR-SEC-06 | M | Every staff action is written to an append-only audit log (who, what, when, old and new value), kept for at least 3 years and readable by the Registrar. |
@@ -439,7 +439,7 @@ Status as of 26 October 2026. "Built" means the feature works in the app and its
 | Staff roles, department/school scoping, parent access with consent | §2, NFR-PRV-04 | Built | |
 | Server-enforced access, audit log | NFR-SEC-01, 02, 05, 06 | Built | |
 | Staff MFA, session timeouts | NFR-SEC-04, 09 | Built | MFA applies with the database; browser-only mode has none |
-| Single sign-on (Google/Microsoft) | NFR-SEC-03 | Built, needs setup | Providers must be enabled in Supabase; passwords remain available |
+| University-provisioned password sign-in, parent email links | NFR-SEC-03 | Built, needs setup | Campus IT must provision accounts and configure SMTP, password policy and recovery redirects |
 | Card data never on our servers | NFR-SEC-07 | Met | No card data is collected |
 | Virus scanning, VAPT | NFR-SEC-08, 10 | Not built | Needs a scanning service and an external audit |
 | Privacy notice and consent, data export, retention | NFR-PRV-01, 03, 05 | Built | Retention periods are a policy decision (§7) |

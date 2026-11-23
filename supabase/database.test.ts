@@ -45,6 +45,7 @@ beforeAll(async () => {
     '004_link_profiles.sql',
     '005_full_platform.sql',
     '006_production_security.sql',
+    '007_provisioned_password_auth.sql',
   ])
     await db.exec(read(`migrations/${file}`))
   await db.exec(read('seed.sql'))
@@ -64,7 +65,7 @@ afterAll(() => db.close())
 
 async function as<T>(user: User, fn: () => Promise<T>, aal = 'aal2'): Promise<T> {
   const [id, email] = user === 'anon' ? ['', ''] : users[user]
-  const method = user === 'parent' ? 'otp' : 'oauth'
+  const method = user === 'parent' ? 'otp' : 'password'
   await db.exec(`reset role;
     select set_config('request.jwt.claim.sub', '${id}', false);
     select set_config('request.jwt.claim.email', '${email}', false);

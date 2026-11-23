@@ -1,14 +1,14 @@
 # Production deployment
 
-This repository builds a static Campus360 client and ships a non-root Nginx container. It does not provision a Supabase project or university identity provider. A university administrator must own and operate those services.
+This repository builds a static Campus360 client and ships a non-root Nginx container. It does not provision a Supabase project, university accounts, SMTP delivery, or staff MFA enrollment. A university administrator must own and operate those services.
 
 ## Required configuration
 
 - A production Supabase project in the university-approved India region, separate from development and staging.
-- Google/Microsoft OAuth or SAML configured for university-managed student and staff identities. Lock each provider to the institution's tenant/domain. Add the production application origin to Supabase's allowed redirect URLs.
-- Staff accounts must use TOTP MFA. Parent accounts must be provisioned from active student consent records and use email one-time links. Password-only sessions are rejected by production data policies.
-- Run database migrations `001_init.sql` through `006_production_security.sql` in numeric order. Do not apply `supabase/seed.sql` to production. It contains sample people, academic records, fees, payments and opportunities.
-- Replace the `staff-admin` sample row inserted by migration 005 with the designated university IT administrator before provisioning auth accounts. Review every profile/role link after SSO first sign-in.
+- Provision university-managed email/password accounts for students and staff through the approved campus IT process. Configure verified email, a 12-character minimum password, password reset redirects, rate limits, and the university-controlled SMTP service. Staff accounts must use TOTP MFA; RLS requires MFA before granting staff access.
+- Parent accounts must be provisioned from active student consent records and use email one-time links. Configure approved SMTP delivery and abuse limits for both password resets and parent sign-in links.
+- Run database migrations `001_init.sql` through `007_provisioned_password_auth.sql` in numeric order. Do not apply `supabase/seed.sql` to production. It contains sample people, academic records, fees, payments and opportunities.
+- Replace the `staff-admin` sample row inserted by migration 005 with the designated university IT administrator before provisioning auth accounts. Review every profile/role link after provisioning and first sign-in.
 - Import only institution-approved records using the university's controlled process. ERP integration is out of scope here; define who owns manual refreshes, validation, corrections and stale-data notices.
 - Configure Supabase backups/PITR and confirm retention, recovery objectives, and an actual restore drill. No application code can prove that provider-level recovery is active.
 - Choose a malware scanning service and retention/deletion policy for uploaded evidence. The storage bucket enforces private access, extension-derived MIME types, and size caps, but it does not scan file contents.
@@ -31,7 +31,7 @@ Use immutable image tags and pin the base image digests in the institution's rel
 
 ## Before opening access
 
-- Confirm production auth provider settings, redirect origins, parent OTP delivery, and staff MFA enrollment with real university accounts.
+- Confirm production account-provisioning and password reset settings, redirect origins, parent OTP delivery, and staff MFA enrollment with real university accounts.
 - Verify the migration chain and role behavior in staging. Confirm that parents cannot see placement, resumes, private requests, or other students; staff roles see only their office queues; files are readable only by the student and the responsible office.
 - Check that the production build has no sample names or demo passwords and that payment initiation remains disabled. The test `pay_charges()` RPC is revoked from client roles; approved payments and refunds need a separately reviewed provider integration.
 - Validate manual data-load reconciliation and record corrections against the university source. The static app is not an ERP replacement or an automatic source of truth.

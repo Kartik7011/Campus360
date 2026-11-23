@@ -16,6 +16,13 @@ export async function sendParentSignInLink(email: string) {
   if (error) throw new Error(error.message)
 }
 
+export async function sendPasswordReset(email: string) {
+  const { error } = await supabase!.auth.resetPasswordForEmail(email.trim(), {
+    redirectTo: `${window.location.origin}/?password-recovery=1`,
+  })
+  if (error) throw new Error(error.message)
+}
+
 // The role comes from the profiles table, which a user can read but not change.
 async function sessionFromProfile(userId: string): Promise<Session | null> {
   const { data, error } = await supabase!
@@ -35,7 +42,6 @@ async function sessionFromProfile(userId: string): Promise<Session | null> {
 
 // Returns null for wrong credentials or an account with no profile; throws when the server can't be reached.
 export async function signInRemote(email: string, password: string): Promise<Session | null> {
-  if (import.meta.env.PROD) throw new Error('Password sign-in is disabled in production.')
   const { data, error } = await supabase!.auth.signInWithPassword({ email: email.trim(), password })
   if (error) {
     if (error.status === 400) return null
@@ -45,13 +51,6 @@ export async function signInRemote(email: string, password: string): Promise<Ses
   if (!session) await supabase!.auth.signOut()
   return session
 }
-
-// University Google / Microsoft accounts (NFR-SEC-03). The provider must be enabled in the Supabase dashboard.
-export const signInWithProvider = (provider: 'google' | 'azure') =>
-  supabase!.auth.signInWithOAuth({
-    provider,
-    options: { redirectTo: window.location.origin, scopes: provider === 'azure' ? 'email' : undefined },
-  })
 
 // Staff sessions count only after the second factor; until then they are not signed in.
 export async function restoreRemoteSession(): Promise<{ session: Session; needsMfa: boolean } | null> {
@@ -73,7 +72,7 @@ function hasAllowedSignInMethod(accessToken: string, role: Role) {
     const methods = Array.isArray(payload.amr) ? payload.amr.map((item: { method?: string }) => item.method) : []
     return role === 'parent'
       ? methods.some((method: string) => method === 'otp' || method === 'magiclink')
-      : methods.some((method: string) => method === 'oauth' || method === 'sso/saml')
+      : methods.some((method: string) => method === 'password')
   } catch {
     return false
   }

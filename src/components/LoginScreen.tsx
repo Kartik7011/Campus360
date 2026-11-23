@@ -3,8 +3,8 @@ import { BellRing, BriefcaseBusiness, Eye, EyeOff, GraduationCap } from 'lucide-
 import {
   mfaLevel,
   sendParentSignInLink,
+  sendPasswordReset,
   signInRemote,
-  signInWithProvider,
   startMfaEnrolment,
   verifyMfa,
   type Role,
@@ -45,6 +45,7 @@ export function LoginScreen({
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [linkSent, setLinkSent] = useState(false)
+  const [resetSent, setResetSent] = useState(false)
   const [busy, setBusy] = useState(false)
   // staff on the database must pass a second factor before the session counts (NFR-SEC-04)
   const [mfa, setMfa] = useState<{
@@ -112,19 +113,6 @@ export function LoginScreen({
     } catch {
       // Keep the response the same for unknown addresses and temporary delivery failures.
       setLinkSent(true)
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const startProvider = async (provider: 'google' | 'azure') => {
-    setBusy(true)
-    setError('')
-    try {
-      const { error: failed } = await signInWithProvider(provider)
-      if (failed) setError(failed.message)
-    } catch {
-      setError('University sign-in could not be started. Try again or contact campus IT.')
     } finally {
       setBusy(false)
     }
@@ -200,7 +188,7 @@ export function LoginScreen({
           <p className="mt-1 text-sm text-slate-500">
             {role === 'student'
               ? import.meta.env.PROD
-                ? 'Sign in with your university Google or Microsoft account.'
+                ? 'Use the Campus360 account provided by university IT.'
                 : 'Sign in with your college account.'
               : role === 'parent'
                 ? import.meta.env.PROD
@@ -236,8 +224,7 @@ export function LoginScreen({
               {mfa.enrol && (
                 <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-600">
                   <p>
-                    Staff accounts need a second factor. Scan this with an authenticator app (Google
-                    Authenticator, Microsoft Authenticator), then enter the 6-digit code.
+                    Staff accounts need a second factor. Scan this with an authenticator app, then enter the 6-digit code.
                   </p>
                   <img
                     src={mfa.enrol.qr}
@@ -306,20 +293,13 @@ export function LoginScreen({
                   {busy ? 'Sending…' : 'Email a sign-in link'}
                 </button>
               </form>
-            ) : import.meta.env.PROD ? (
-              <div className="mt-5 space-y-4">
-                <p className="text-sm leading-6 text-slate-600">Use the university identity provider assigned to your account. Staff will complete authenticator verification after sign-in.</p>
-                {error && <p role="alert" className="text-sm font-medium text-rose-700">{error}</p>}
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {(['google', 'azure'] as const).map((provider) => (
-                    <button key={provider} type="button" disabled={!supabase || busy} onClick={() => void startProvider(provider)} className="h-11 rounded-xl bg-white text-sm font-semibold text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 disabled:opacity-50">
-                      {provider === 'google' ? 'Continue with Google' : 'Continue with Microsoft'}
-                    </button>
-                  ))}
-                </div>
-              </div>
             ) : (
             <form onSubmit={submit} className="mt-5 space-y-4" noValidate>
+              {import.meta.env.PROD && (
+                <p className="text-sm leading-6 text-slate-600">
+                  Sign in with the account provided by university IT. Staff accounts require an authenticator code.
+                </p>
+              )}
               <div>
                 <label htmlFor="email" className="text-sm font-medium text-slate-700">
                   Email
@@ -334,13 +314,7 @@ export function LoginScreen({
                     setEmail(event.target.value)
                     setError('')
                   }}
-                  placeholder={
-                    role === 'student'
-                      ? 'name.surname@galgotiasuniversity.ac.in'
-                      : role === 'parent'
-                        ? 'The email the student gave for parent access'
-                        : 'office@galgotiasuniversity.ac.in'
-                  }
+                  placeholder={import.meta.env.PROD ? 'University-issued email address' : role === 'parent' ? 'The email the student gave for parent access' : 'name@galgotiasuniversity.ac.in'}
                   className="form-input mt-1.5 bg-white"
                   aria-invalid={Boolean(error)}
                   aria-describedby={error ? 'signin-error' : undefined}
@@ -389,24 +363,28 @@ export function LoginScreen({
               >
                 {busy ? 'Signing in…' : 'Sign in'}
               </button>
-              {supabase && (
-                <div className="grid gap-2 pt-1 sm:grid-cols-2">
-                  {(
-                    [
-                      ['google', 'Continue with Google'],
-                      ['azure', 'Continue with Microsoft'],
-                    ] as const
-                  ).map(([provider, label]) => (
-                    <button
-                      key={provider}
-                      type="button"
-                      disabled={busy}
-                      onClick={() => void startProvider(provider)}
-                      className="h-11 rounded-xl bg-white text-sm font-semibold text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
-                    >
-                      {label}
-                    </button>
-                  ))}
+              {import.meta.env.PROD && role !== 'parent' && supabase && (
+                <div className="pt-1 text-center">
+                  <button
+                    type="button"
+                    disabled={!email.trim() || busy}
+                    onClick={async () => {
+                      setBusy(true)
+                      setResetSent(false)
+                      try {
+                        await sendPasswordReset(email)
+                      } catch {
+                        // Do not reveal whether this address has a provisioned account.
+                      } finally {
+                        setResetSent(true)
+                        setBusy(false)
+                      }
+                    }}
+                    className="text-sm font-medium text-brand-700 underline underline-offset-2 disabled:cursor-not-allowed disabled:text-slate-400"
+                  >
+                    Forgot password?
+                  </button>
+                  {resetSent && <p role="status" className="mt-2 text-xs text-slate-500">If this account can receive a reset link, one has been sent.</p>}
                 </div>
               )}
             </form>
@@ -427,5 +405,82 @@ export function LoginScreen({
         </div>
       </section>
     </div>
+  )
+}
+
+export function PasswordRecoveryScreen({ onBack }: { onBack: () => void }) {
+  const [hasSession, setHasSession] = useState<boolean | null>(null)
+  const [password, setPassword] = useState('')
+  const [confirmation, setConfirmation] = useState('')
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [complete, setComplete] = useState(false)
+
+  useEffect(() => {
+    if (!supabase) return setHasSession(false)
+    let active = true
+    void supabase.auth.getSession().then(({ data }) => {
+      if (active) setHasSession(Boolean(data.session))
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (active && session) setHasSession(true)
+    })
+    return () => { active = false; subscription.unsubscribe() }
+  }, [])
+
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    if (password.length < 12) return setError('Choose a password with at least 12 characters.')
+    if (password !== confirmation) return setError('The passwords do not match.')
+    if (!supabase) return setError('Password reset is unavailable because the application is not configured.')
+    setBusy(true)
+    setError('')
+    try {
+      const { error: updateError } = await supabase.auth.updateUser({ password })
+      if (updateError) throw updateError
+      await supabase.auth.signOut()
+      setComplete(true)
+    } catch (reason) {
+      setError((reason as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <main className="grid min-h-dvh place-items-center bg-canvas px-4 py-8">
+      <section className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-card sm:p-8">
+        <Logo />
+        <h1 className="mt-6 font-display text-2xl font-semibold text-slate-950">
+          {complete ? 'Password updated' : 'Reset your password'}
+        </h1>
+        {complete ? (
+          <div className="mt-4 space-y-4">
+            <p className="text-sm leading-6 text-slate-600">Your password has been changed. Sign in with your new password.</p>
+            <button type="button" onClick={onBack} className="h-11 w-full rounded-xl bg-brand-700 text-sm font-semibold text-white">Back to sign in</button>
+          </div>
+        ) : hasSession === null ? (
+          <p className="mt-4 text-sm text-slate-600">Checking your secure reset link…</p>
+        ) : !hasSession ? (
+          <div className="mt-4 space-y-4">
+            <p className="text-sm leading-6 text-slate-600">This reset link is invalid or has expired. Return to sign in and request another link.</p>
+            <button type="button" onClick={onBack} className="h-11 w-full rounded-xl bg-brand-700 text-sm font-semibold text-white">Back to sign in</button>
+          </div>
+        ) : (
+          <form onSubmit={submit} className="mt-4 space-y-4">
+            <label className="block text-sm font-medium text-slate-700">
+              New password
+              <input className="form-input mt-1.5 bg-white" type="password" autoComplete="new-password" minLength={12} required value={password} onChange={(event) => setPassword(event.target.value)} />
+            </label>
+            <label className="block text-sm font-medium text-slate-700">
+              Confirm new password
+              <input className="form-input mt-1.5 bg-white" type="password" autoComplete="new-password" minLength={12} required value={confirmation} onChange={(event) => setConfirmation(event.target.value)} />
+            </label>
+            {error && <p role="alert" className="text-sm text-rose-700">{error}</p>}
+            <button type="submit" disabled={busy} className="h-11 w-full rounded-xl bg-brand-700 text-sm font-semibold text-white disabled:opacity-50">{busy ? 'Updating…' : 'Update password'}</button>
+          </form>
+        )}
+      </section>
+    </main>
   )
 }
