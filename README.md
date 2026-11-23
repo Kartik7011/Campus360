@@ -2,6 +2,10 @@
 
 Campus360 is a student portal for academic records, exams, fees and placements. Students see their marks and documents, apply for exams and pay fees, and track every request without visiting an office. Each university office (exam cell, accounts, placement cell, mentors, HoDs, deans, registrar) works from its own queue, and every staff change is logged.
 
+## Public Vercel demo
+
+Open `https://campus360-three.vercel.app/?demo=1` to explore the student, parent and staff demo accounts. The demo uses a curated synthetic fixture stored only in the current browser session; it does not sign in to Supabase or access university records. The demo credentials are displayed on the demo login page. The normal production sign-in at `/` continues to use university-provisioned Supabase accounts.
+
 The full requirements are in [requirement.md](requirement.md); section 9 lists what is built.
 
 ## Features

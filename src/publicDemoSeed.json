@@ -1,0 +1,1850 @@
+{
+  "version": 4,
+  "students": [
+    {
+      "id": "kartik",
+      "name": "Demo Student",
+      "initials": "DS",
+      "email": "student@campus360.example",
+      "phone": "0000000000",
+      "enrolmentNo": "DEMO-0001",
+      "apaarId": null,
+      "school": "School of Computing Science & Engineering",
+      "semester": 7,
+      "branch": "Computer Science & Engineering",
+      "program": "B.Tech",
+      "batch": 2023,
+      "lateralEntry": false,
+      "status": "Enrolled",
+      "mentorId": "mentor-avinash",
+      "activeBacklogs": 0,
+      "backlogSubjects": [],
+      "debarred": false,
+      "graduationYear": 2027,
+      "attendance": 88,
+      "creditsCompleted": 112,
+      "totalCredits": 160,
+      "skills": [
+        "React",
+        "TypeScript",
+        "Node.js",
+        "SQL",
+        "Git"
+      ],
+      "profileNote": "Synthetic profile created for exploring the Campus360 demo.",
+      "cgpa": 8.1,
+      "source": "University ERP (sample data)",
+      "syncedAt": "2026-10-26T02:00:00Z"
+    }
+  ],
+  "staff": [
+    {
+      "id": "staff-admin",
+      "name": "Demo Staff",
+      "email": "staff@campus360.example",
+      "role": "admin",
+      "department": ""
+    }
+  ],
+  "mentors": [
+    {
+      "id": "mentor-avinash",
+      "name": "Demo Mentor",
+      "initials": "DM",
+      "department": "Department of Computer Science & Engineering",
+      "email": "mentor@campus360.example",
+      "phone": "0000000000",
+      "officeHours": "Tue & Thu · 2:00–4:00 PM",
+      "slots": [
+        "Tue 14:00",
+        "Tue 15:00",
+        "Thu 14:00",
+        "Thu 15:00"
+      ],
+      "availability": "Available this week",
+      "focus": "Academic planning, rechecking support, and placement readiness"
+    }
+  ],
+  "notices": [
+    {
+      "id": "notice-bs-2026",
+      "title": "Back & special exams – applications open",
+      "category": "Exams",
+      "summary": "Apply for back (failed) and special (missed with a valid reason) exams on the Exams page. A subject can be taken only once per session.",
+      "date": "2026-10-20",
+      "deadline": "2026-11-05",
+      "priority": "High",
+      "audience": "Students with backlogs or missed papers",
+      "source": "Controller of Examinations",
+      "mandatory": true
+    },
+    {
+      "id": "notice-recheck-may",
+      "title": "Rechecking & revaluation – May 2026 results",
+      "category": "Rechecking",
+      "summary": "Rechecking, revaluation and answer-sheet copies can be requested for ten days after the results.",
+      "date": "2026-10-19",
+      "deadline": "2026-10-29",
+      "priority": "High",
+      "audience": "Students with May 2026 results",
+      "source": "Controller of Examinations"
+    },
+    {
+      "id": "notice-exam-fee",
+      "title": "December 2026 exam fee due",
+      "category": "Fees",
+      "summary": "Pay the semester exam fee by 15 November. Unpaid fees block the hall ticket.",
+      "date": "2026-10-15",
+      "deadline": "2026-11-15",
+      "priority": "High",
+      "audience": "7th semester students",
+      "source": "Accounts office",
+      "target": {
+        "semesters": [
+          7
+        ]
+      },
+      "mandatory": true
+    },
+    {
+      "id": "notice-2",
+      "title": "Northstar Finance pre-placement talk",
+      "category": "Placement",
+      "summary": "Join the role briefing and live Q&A for the Associate Product Analyst opening.",
+      "date": "2026-10-07",
+      "deadline": "2026-10-30",
+      "priority": "Medium",
+      "audience": "Eligible final-year students",
+      "source": "Training & Placement Cell",
+      "target": {
+        "batches": [
+          2023
+        ]
+      }
+    },
+    {
+      "id": "notice-scse-lab",
+      "title": "SCSE project lab extended hours",
+      "category": "Academic",
+      "summary": "Project labs in Block A stay open until 9 PM on weekdays until the end of the semester.",
+      "date": "2026-10-21",
+      "priority": "Low",
+      "audience": "School of Computing Science & Engineering",
+      "source": "Dean, SCSE",
+      "target": {
+        "schools": [
+          "School of Computing Science & Engineering"
+        ]
+      }
+    },
+    {
+      "id": "notice-5",
+      "title": "Attendance correction window",
+      "category": "Academic",
+      "summary": "Review your attendance per course and report discrepancies through a Data correction ticket.",
+      "date": "2026-10-22",
+      "deadline": "2026-11-02",
+      "priority": "Medium",
+      "audience": "All enrolled students",
+      "source": "Dean Academics"
+    }
+  ],
+  "noticeReads": [
+    {
+      "id": "read-kartik-bs",
+      "noticeId": "notice-bs-2026",
+      "studentId": "kartik",
+      "readOn": "2026-10-21"
+    }
+  ],
+  "notifications": [
+    {
+      "id": "notification-1",
+      "studentId": "kartik",
+      "title": "May 2026 results declared",
+      "body": "Your semester 6 result is available.",
+      "view": "results",
+      "createdOn": "2026-10-19T09:00:00Z",
+      "readOn": "2026-10-19T12:00:00Z"
+    },
+    {
+      "id": "notification-2",
+      "studentId": "kartik",
+      "title": "Exam attendance recorded",
+      "body": "Technical Writing (summer term) – 20 Oct: Absent. If you were present, raise a dispute within 7 days.",
+      "view": "exams",
+      "createdOn": "2026-10-22T16:00:00Z"
+    }
+  ],
+  "courses": [
+    {
+      "id": "course-CSE-501",
+      "code": "CSE-501",
+      "title": "Database Management Systems",
+      "credits": 4,
+      "semester": 5,
+      "branch": "Computer Science & Engineering"
+    },
+    {
+      "id": "course-CSE-502",
+      "code": "CSE-502",
+      "title": "Theory of Computation",
+      "credits": 4,
+      "semester": 5,
+      "branch": "Computer Science & Engineering"
+    },
+    {
+      "id": "course-CSE-503",
+      "code": "CSE-503",
+      "title": "Design & Analysis of Algorithms",
+      "credits": 4,
+      "semester": 5,
+      "branch": "Computer Science & Engineering"
+    },
+    {
+      "id": "course-CSE-504",
+      "code": "CSE-504",
+      "title": "Web Technologies",
+      "credits": 3,
+      "semester": 5,
+      "branch": "Computer Science & Engineering"
+    },
+    {
+      "id": "course-CSE-601",
+      "code": "CSE-601",
+      "title": "Operating Systems",
+      "credits": 4,
+      "semester": 6,
+      "branch": "Computer Science & Engineering"
+    },
+    {
+      "id": "course-CSE-602",
+      "code": "CSE-602",
+      "title": "Compiler Design",
+      "credits": 4,
+      "semester": 6,
+      "branch": "Computer Science & Engineering"
+    },
+    {
+      "id": "course-CSE-603",
+      "code": "CSE-603",
+      "title": "Computer Networks",
+      "credits": 4,
+      "semester": 6,
+      "branch": "Computer Science & Engineering"
+    },
+    {
+      "id": "course-CSE-604",
+      "code": "CSE-604",
+      "title": "Software Engineering",
+      "credits": 3,
+      "semester": 6,
+      "branch": "Computer Science & Engineering"
+    },
+    {
+      "id": "course-CSE-605",
+      "code": "CSE-605",
+      "title": "Machine Learning",
+      "credits": 3,
+      "semester": 6,
+      "branch": "Computer Science & Engineering"
+    },
+    {
+      "id": "course-CSE-S11",
+      "code": "CSE-S11",
+      "title": "Technical Writing (summer term)",
+      "credits": 2,
+      "semester": 6,
+      "branch": "Computer Science & Engineering"
+    },
+    {
+      "id": "course-CSE-701",
+      "code": "CSE-701",
+      "title": "Cloud Computing",
+      "credits": 3,
+      "semester": 7,
+      "branch": "Computer Science & Engineering"
+    },
+    {
+      "id": "course-CSE-702",
+      "code": "CSE-702",
+      "title": "Information Security",
+      "credits": 3,
+      "semester": 7,
+      "branch": "Computer Science & Engineering"
+    },
+    {
+      "id": "course-CSE-703",
+      "code": "CSE-703",
+      "title": "Big Data Analytics",
+      "credits": 3,
+      "semester": 7,
+      "branch": "Computer Science & Engineering"
+    },
+    {
+      "id": "course-CSE-704",
+      "code": "CSE-704",
+      "title": "Major Project I",
+      "credits": 6,
+      "semester": 7,
+      "branch": "Computer Science & Engineering"
+    },
+    {
+      "id": "course-ECE-501",
+      "code": "ECE-501",
+      "title": "Control Systems",
+      "credits": 4,
+      "semester": 5,
+      "branch": "Electronics & Communication Engineering"
+    },
+    {
+      "id": "course-ECE-502",
+      "code": "ECE-502",
+      "title": "Communication Theory",
+      "credits": 4,
+      "semester": 5,
+      "branch": "Electronics & Communication Engineering"
+    },
+    {
+      "id": "course-ECE-503",
+      "code": "ECE-503",
+      "title": "Linear Integrated Circuits",
+      "credits": 4,
+      "semester": 5,
+      "branch": "Electronics & Communication Engineering"
+    },
+    {
+      "id": "course-ECE-601",
+      "code": "ECE-601",
+      "title": "Electromagnetic Waves II (EM2)",
+      "credits": 4,
+      "semester": 6,
+      "branch": "Electronics & Communication Engineering"
+    },
+    {
+      "id": "course-ECE-602",
+      "code": "ECE-602",
+      "title": "Analog Circuits",
+      "credits": 4,
+      "semester": 6,
+      "branch": "Electronics & Communication Engineering"
+    },
+    {
+      "id": "course-ECE-603",
+      "code": "ECE-603",
+      "title": "Microprocessors",
+      "credits": 4,
+      "semester": 6,
+      "branch": "Electronics & Communication Engineering"
+    },
+    {
+      "id": "course-ECE-605",
+      "code": "ECE-605",
+      "title": "Digital Signal Processing",
+      "credits": 4,
+      "semester": 6,
+      "branch": "Electronics & Communication Engineering"
+    },
+    {
+      "id": "course-ECE-606",
+      "code": "ECE-606",
+      "title": "VLSI Design",
+      "credits": 3,
+      "semester": 6,
+      "branch": "Electronics & Communication Engineering"
+    },
+    {
+      "id": "course-ECE-701",
+      "code": "ECE-701",
+      "title": "Embedded Systems",
+      "credits": 3,
+      "semester": 7,
+      "branch": "Electronics & Communication Engineering"
+    },
+    {
+      "id": "course-ECE-702",
+      "code": "ECE-702",
+      "title": "Wireless Communication",
+      "credits": 3,
+      "semester": 7,
+      "branch": "Electronics & Communication Engineering"
+    },
+    {
+      "id": "course-ECE-703",
+      "code": "ECE-703",
+      "title": "Internet of Things",
+      "credits": 3,
+      "semester": 7,
+      "branch": "Electronics & Communication Engineering"
+    }
+  ],
+  "courseResults": [
+    {
+      "id": "result-kartik-CSE-501-dec-2025",
+      "studentId": "kartik",
+      "courseCode": "CSE-501",
+      "semester": 5,
+      "sessionId": "dec-2025",
+      "attempt": "Regular",
+      "components": [
+        {
+          "name": "Continuous assessment",
+          "obtained": 20,
+          "max": 25
+        },
+        {
+          "name": "Mid-term",
+          "obtained": 19,
+          "max": 25
+        },
+        {
+          "name": "End-term",
+          "obtained": 38,
+          "max": 50
+        }
+      ],
+      "total": 77,
+      "grade": "A",
+      "gradePoints": 8,
+      "passed": true,
+      "status": "Declared"
+    },
+    {
+      "id": "result-kartik-CSE-502-dec-2025",
+      "studentId": "kartik",
+      "courseCode": "CSE-502",
+      "semester": 5,
+      "sessionId": "dec-2025",
+      "attempt": "Regular",
+      "components": [
+        {
+          "name": "Continuous assessment",
+          "obtained": 18,
+          "max": 25
+        },
+        {
+          "name": "Mid-term",
+          "obtained": 17,
+          "max": 25
+        },
+        {
+          "name": "End-term",
+          "obtained": 33,
+          "max": 50
+        }
+      ],
+      "total": 68,
+      "grade": "B+",
+      "gradePoints": 7,
+      "passed": true,
+      "status": "Declared"
+    },
+    {
+      "id": "result-kartik-CSE-503-dec-2025",
+      "studentId": "kartik",
+      "courseCode": "CSE-503",
+      "semester": 5,
+      "sessionId": "dec-2025",
+      "attempt": "Regular",
+      "components": [
+        {
+          "name": "Continuous assessment",
+          "obtained": 21,
+          "max": 25
+        },
+        {
+          "name": "Mid-term",
+          "obtained": 20,
+          "max": 25
+        },
+        {
+          "name": "End-term",
+          "obtained": 37,
+          "max": 50
+        }
+      ],
+      "total": 78,
+      "grade": "A",
+      "gradePoints": 8,
+      "passed": true,
+      "status": "Declared"
+    },
+    {
+      "id": "result-kartik-CSE-504-dec-2025",
+      "studentId": "kartik",
+      "courseCode": "CSE-504",
+      "semester": 5,
+      "sessionId": "dec-2025",
+      "attempt": "Regular",
+      "components": [
+        {
+          "name": "Continuous assessment",
+          "obtained": 23,
+          "max": 25
+        },
+        {
+          "name": "Mid-term",
+          "obtained": 22,
+          "max": 25
+        },
+        {
+          "name": "End-term",
+          "obtained": 42,
+          "max": 50
+        }
+      ],
+      "total": 87,
+      "grade": "A+",
+      "gradePoints": 9,
+      "passed": true,
+      "status": "Declared"
+    },
+    {
+      "id": "result-kartik-CSE-601-may-2026",
+      "studentId": "kartik",
+      "courseCode": "CSE-601",
+      "semester": 6,
+      "sessionId": "may-2026",
+      "attempt": "Regular",
+      "components": [
+        {
+          "name": "Continuous assessment",
+          "obtained": 19,
+          "max": 25
+        },
+        {
+          "name": "Mid-term",
+          "obtained": 18,
+          "max": 25
+        },
+        {
+          "name": "End-term",
+          "obtained": 35,
+          "max": 50
+        }
+      ],
+      "total": 72,
+      "grade": "A",
+      "gradePoints": 8,
+      "passed": true,
+      "status": "Declared"
+    },
+    {
+      "id": "result-kartik-CSE-602-may-2026",
+      "studentId": "kartik",
+      "courseCode": "CSE-602",
+      "semester": 6,
+      "sessionId": "may-2026",
+      "attempt": "Regular",
+      "components": [
+        {
+          "name": "Continuous assessment",
+          "obtained": 21,
+          "max": 25
+        },
+        {
+          "name": "Mid-term",
+          "obtained": 20,
+          "max": 25
+        },
+        {
+          "name": "End-term",
+          "obtained": 40,
+          "max": 50
+        }
+      ],
+      "total": 81,
+      "grade": "A+",
+      "gradePoints": 9,
+      "passed": true,
+      "status": "Declared"
+    },
+    {
+      "id": "result-kartik-CSE-603-may-2026",
+      "studentId": "kartik",
+      "courseCode": "CSE-603",
+      "semester": 6,
+      "sessionId": "may-2026",
+      "attempt": "Regular",
+      "components": [
+        {
+          "name": "Continuous assessment",
+          "obtained": 17,
+          "max": 25
+        },
+        {
+          "name": "Mid-term",
+          "obtained": 16,
+          "max": 25
+        },
+        {
+          "name": "End-term",
+          "obtained": 35,
+          "max": 50
+        }
+      ],
+      "total": 68,
+      "grade": "B+",
+      "gradePoints": 7,
+      "passed": true,
+      "status": "Declared"
+    },
+    {
+      "id": "result-kartik-CSE-604-may-2026",
+      "studentId": "kartik",
+      "courseCode": "CSE-604",
+      "semester": 6,
+      "sessionId": "may-2026",
+      "attempt": "Regular",
+      "components": [
+        {
+          "name": "Continuous assessment",
+          "obtained": 20,
+          "max": 25
+        },
+        {
+          "name": "Mid-term",
+          "obtained": 19,
+          "max": 25
+        },
+        {
+          "name": "End-term",
+          "obtained": 38,
+          "max": 50
+        }
+      ],
+      "total": 77,
+      "grade": "A",
+      "gradePoints": 8,
+      "passed": true,
+      "status": "Declared"
+    },
+    {
+      "id": "result-kartik-CSE-605-may-2026",
+      "studentId": "kartik",
+      "courseCode": "CSE-605",
+      "semester": 6,
+      "sessionId": "may-2026",
+      "attempt": "Regular",
+      "components": [
+        {
+          "name": "Continuous assessment",
+          "obtained": 22,
+          "max": 25
+        },
+        {
+          "name": "Mid-term",
+          "obtained": 21,
+          "max": 25
+        },
+        {
+          "name": "End-term",
+          "obtained": 42,
+          "max": 50
+        }
+      ],
+      "total": 85,
+      "grade": "A+",
+      "gradePoints": 9,
+      "passed": true,
+      "status": "Declared"
+    },
+    {
+      "id": "result-kartik-CSE-701-dec-2026",
+      "studentId": "kartik",
+      "courseCode": "CSE-701",
+      "semester": 7,
+      "sessionId": "dec-2026",
+      "attempt": "Regular",
+      "components": [
+        {
+          "name": "Continuous assessment",
+          "obtained": 21,
+          "max": 25
+        },
+        {
+          "name": "Mid-term",
+          "obtained": 19,
+          "max": 25
+        },
+        {
+          "name": "End-term",
+          "obtained": null,
+          "max": 50
+        }
+      ],
+      "total": null,
+      "grade": null,
+      "gradePoints": null,
+      "passed": null,
+      "status": "Provisional"
+    },
+    {
+      "id": "result-kartik-CSE-702-dec-2026",
+      "studentId": "kartik",
+      "courseCode": "CSE-702",
+      "semester": 7,
+      "sessionId": "dec-2026",
+      "attempt": "Regular",
+      "components": [
+        {
+          "name": "Continuous assessment",
+          "obtained": 19,
+          "max": 25
+        },
+        {
+          "name": "Mid-term",
+          "obtained": 17,
+          "max": 25
+        },
+        {
+          "name": "End-term",
+          "obtained": null,
+          "max": 50
+        }
+      ],
+      "total": null,
+      "grade": null,
+      "gradePoints": null,
+      "passed": null,
+      "status": "Provisional"
+    },
+    {
+      "id": "result-kartik-CSE-703-dec-2026",
+      "studentId": "kartik",
+      "courseCode": "CSE-703",
+      "semester": 7,
+      "sessionId": "dec-2026",
+      "attempt": "Regular",
+      "components": [
+        {
+          "name": "Continuous assessment",
+          "obtained": 22,
+          "max": 25
+        },
+        {
+          "name": "Mid-term",
+          "obtained": 20,
+          "max": 25
+        },
+        {
+          "name": "End-term",
+          "obtained": null,
+          "max": 50
+        }
+      ],
+      "total": null,
+      "grade": null,
+      "gradePoints": null,
+      "passed": null,
+      "status": "Provisional"
+    },
+    {
+      "id": "result-kartik-CSE-704-dec-2026",
+      "studentId": "kartik",
+      "courseCode": "CSE-704",
+      "semester": 7,
+      "sessionId": "dec-2026",
+      "attempt": "Regular",
+      "components": [
+        {
+          "name": "Continuous assessment",
+          "obtained": 23,
+          "max": 25
+        },
+        {
+          "name": "Mid-term",
+          "obtained": 22,
+          "max": 25
+        },
+        {
+          "name": "End-term",
+          "obtained": null,
+          "max": 50
+        }
+      ],
+      "total": null,
+      "grade": null,
+      "gradePoints": null,
+      "passed": null,
+      "status": "Provisional"
+    }
+  ],
+  "semesterResults": [
+    {
+      "id": "sem-kartik-1",
+      "studentId": "kartik",
+      "semester": 1,
+      "sessionId": "odd-1",
+      "sgpa": 7.4,
+      "cgpa": 7.4,
+      "creditsEarned": 22,
+      "creditsRegistered": 22,
+      "status": "Pass",
+      "declaredOn": null
+    },
+    {
+      "id": "sem-kartik-2",
+      "studentId": "kartik",
+      "semester": 2,
+      "sessionId": "even-2",
+      "sgpa": 7.6,
+      "cgpa": 7.5,
+      "creditsEarned": 22,
+      "creditsRegistered": 22,
+      "status": "Pass",
+      "declaredOn": null
+    },
+    {
+      "id": "sem-kartik-3",
+      "studentId": "kartik",
+      "semester": 3,
+      "sessionId": "odd-3",
+      "sgpa": 7.9,
+      "cgpa": 7.63,
+      "creditsEarned": 22,
+      "creditsRegistered": 22,
+      "status": "Pass",
+      "declaredOn": null
+    },
+    {
+      "id": "sem-kartik-4",
+      "studentId": "kartik",
+      "semester": 4,
+      "sessionId": "even-4",
+      "sgpa": 7.7,
+      "cgpa": 7.65,
+      "creditsEarned": 22,
+      "creditsRegistered": 22,
+      "status": "Pass",
+      "declaredOn": null
+    },
+    {
+      "id": "sem-kartik-5",
+      "studentId": "kartik",
+      "semester": 5,
+      "sessionId": "dec-2025",
+      "sgpa": 7.93,
+      "cgpa": 7.69,
+      "creditsEarned": 15,
+      "creditsRegistered": 15,
+      "status": "Pass",
+      "declaredOn": "2026-02-05"
+    },
+    {
+      "id": "sem-kartik-6",
+      "studentId": "kartik",
+      "semester": 6,
+      "sessionId": "may-2026",
+      "sgpa": 8.17,
+      "cgpa": 7.76,
+      "creditsEarned": 18,
+      "creditsRegistered": 18,
+      "status": "Pass",
+      "declaredOn": "2026-10-19"
+    }
+  ],
+  "markChanges": [
+    {
+      "id": "markchange-cn-grace",
+      "resultId": "result-kartik-CSE-603-may-2026",
+      "studentId": "kartik",
+      "courseCode": "CSE-603",
+      "fromTotal": 66,
+      "toTotal": 68,
+      "fromGrade": "B+",
+      "toGrade": "B+",
+      "reason": "Grace marks",
+      "note": "Ordinance 12(b): up to 2 grace marks in one course per semester.",
+      "changedOn": "2026-10-19"
+    }
+  ],
+  "creditTransfers": [
+    {
+      "id": "transfer-kartik-nptel",
+      "studentId": "kartik",
+      "source": "NPTEL",
+      "course": "Programming in Java (12 weeks)",
+      "credits": 3,
+      "approvedOn": "2026-03-10"
+    }
+  ],
+  "issuedDocuments": [
+    {
+      "id": "doc-kartik-gs6",
+      "serial": "C360-GS-7Q4K2M9X",
+      "studentId": "kartik",
+      "kind": "Grade sheet",
+      "title": "Grade sheet – Semester 6",
+      "ref": "6",
+      "issuedOn": "2026-10-20"
+    }
+  ],
+  "documentRequests": [
+    {
+      "id": "docreq-kartik-bonafide",
+      "studentId": "kartik",
+      "kind": "Bonafide certificate",
+      "copies": 1,
+      "delivery": "Collect",
+      "address": "",
+      "purpose": "Passport application",
+      "requestedOn": "2026-10-21",
+      "status": "Ready",
+      "remarks": "Collect from the Registrar’s office, counter 3."
+    }
+  ],
+  "courseAttendance": [
+    {
+      "id": "att-kartik-CSE-701",
+      "studentId": "kartik",
+      "courseCode": "CSE-701",
+      "semester": 7,
+      "held": 40,
+      "attended": 35,
+      "updatedOn": "2026-10-25"
+    },
+    {
+      "id": "att-kartik-CSE-702",
+      "studentId": "kartik",
+      "courseCode": "CSE-702",
+      "semester": 7,
+      "held": 38,
+      "attended": 32,
+      "updatedOn": "2026-10-25"
+    },
+    {
+      "id": "att-kartik-CSE-703",
+      "studentId": "kartik",
+      "courseCode": "CSE-703",
+      "semester": 7,
+      "held": 36,
+      "attended": 31,
+      "updatedOn": "2026-10-25"
+    },
+    {
+      "id": "att-kartik-CSE-704",
+      "studentId": "kartik",
+      "courseCode": "CSE-704",
+      "semester": 7,
+      "held": 20,
+      "attended": 18,
+      "updatedOn": "2026-10-25"
+    }
+  ],
+  "condonations": [],
+  "examSessions": [
+    {
+      "id": "dec-2025",
+      "name": "End-term – Dec 2025",
+      "kind": "End-term",
+      "semesterParity": "Odd",
+      "startsOn": "2025-12-01",
+      "endsOn": "2025-12-15",
+      "hallTicketsFrom": "2025-11-24",
+      "resultDeclaredOn": "2026-02-05"
+    },
+    {
+      "id": "may-2026",
+      "name": "End-term – May 2026",
+      "kind": "End-term",
+      "semesterParity": "Even",
+      "startsOn": "2026-05-04",
+      "endsOn": "2026-05-20",
+      "hallTicketsFrom": "2026-04-27",
+      "resultDeclaredOn": "2026-10-19"
+    },
+    {
+      "id": "oct-2026-summer",
+      "name": "Summer term – Oct 2026",
+      "kind": "End-term",
+      "semesterParity": "Even",
+      "startsOn": "2026-10-20",
+      "endsOn": "2026-10-20",
+      "hallTicketsFrom": "2026-10-13",
+      "resultDeclaredOn": null
+    },
+    {
+      "id": "nov-2026-bs",
+      "name": "Back & special exams – Nov 2026",
+      "kind": "Back & special",
+      "semesterParity": "Even",
+      "startsOn": "2026-11-16",
+      "endsOn": "2026-11-20",
+      "applicationOpens": "2026-10-20",
+      "applicationCloses": "2026-11-05",
+      "hallTicketsFrom": "2026-11-12",
+      "resultDeclaredOn": null
+    },
+    {
+      "id": "dec-2026",
+      "name": "End-term – Dec 2026",
+      "kind": "End-term",
+      "semesterParity": "Odd",
+      "startsOn": "2026-12-01",
+      "endsOn": "2026-12-12",
+      "hallTicketsFrom": "2026-11-24",
+      "resultDeclaredOn": null
+    }
+  ],
+  "examPapers": [
+    {
+      "id": "paper-may-2026-CSE-601",
+      "sessionId": "may-2026",
+      "courseCode": "CSE-601",
+      "date": "2026-05-04",
+      "slot": "Morning",
+      "time": "09:30–12:30",
+      "venue": "Block A"
+    },
+    {
+      "id": "paper-may-2026-CSE-602",
+      "sessionId": "may-2026",
+      "courseCode": "CSE-602",
+      "date": "2026-05-07",
+      "slot": "Morning",
+      "time": "09:30–12:30",
+      "venue": "Block A"
+    },
+    {
+      "id": "paper-may-2026-CSE-603",
+      "sessionId": "may-2026",
+      "courseCode": "CSE-603",
+      "date": "2026-05-11",
+      "slot": "Morning",
+      "time": "09:30–12:30",
+      "venue": "Block A"
+    },
+    {
+      "id": "paper-may-2026-CSE-604",
+      "sessionId": "may-2026",
+      "courseCode": "CSE-604",
+      "date": "2026-05-14",
+      "slot": "Morning",
+      "time": "09:30–12:30",
+      "venue": "Block A"
+    },
+    {
+      "id": "paper-may-2026-CSE-605",
+      "sessionId": "may-2026",
+      "courseCode": "CSE-605",
+      "date": "2026-05-18",
+      "slot": "Morning",
+      "time": "09:30–12:30",
+      "venue": "Block A"
+    },
+    {
+      "id": "paper-may-2026-ECE-601",
+      "sessionId": "may-2026",
+      "courseCode": "ECE-601",
+      "date": "2026-05-05",
+      "slot": "Afternoon",
+      "time": "14:00–17:00",
+      "venue": "Block C"
+    },
+    {
+      "id": "paper-may-2026-ECE-602",
+      "sessionId": "may-2026",
+      "courseCode": "ECE-602",
+      "date": "2026-05-08",
+      "slot": "Afternoon",
+      "time": "14:00–17:00",
+      "venue": "Block C"
+    },
+    {
+      "id": "paper-may-2026-ECE-603",
+      "sessionId": "may-2026",
+      "courseCode": "ECE-603",
+      "date": "2026-05-12",
+      "slot": "Afternoon",
+      "time": "14:00–17:00",
+      "venue": "Block C"
+    },
+    {
+      "id": "paper-may-2026-ECE-605",
+      "sessionId": "may-2026",
+      "courseCode": "ECE-605",
+      "date": "2026-05-15",
+      "slot": "Afternoon",
+      "time": "14:00–17:00",
+      "venue": "Block C"
+    },
+    {
+      "id": "paper-may-2026-ECE-606",
+      "sessionId": "may-2026",
+      "courseCode": "ECE-606",
+      "date": "2026-05-19",
+      "slot": "Afternoon",
+      "time": "14:00–17:00",
+      "venue": "Block C"
+    },
+    {
+      "id": "paper-oct-2026-summer-CSE-S11",
+      "sessionId": "oct-2026-summer",
+      "courseCode": "CSE-S11",
+      "date": "2026-10-20",
+      "slot": "Morning",
+      "time": "09:30–12:30",
+      "venue": "Block B"
+    },
+    {
+      "id": "paper-nov-2026-bs-ECE-601",
+      "sessionId": "nov-2026-bs",
+      "courseCode": "ECE-601",
+      "date": "2026-11-16",
+      "slot": "Morning",
+      "time": "09:30–12:30",
+      "venue": "Block C"
+    },
+    {
+      "id": "paper-nov-2026-bs-ECE-602",
+      "sessionId": "nov-2026-bs",
+      "courseCode": "ECE-602",
+      "date": "2026-11-18",
+      "slot": "Morning",
+      "time": "09:30–12:30",
+      "venue": "Block C"
+    },
+    {
+      "id": "paper-nov-2026-bs-CSE-502",
+      "sessionId": "nov-2026-bs",
+      "courseCode": "CSE-502",
+      "date": "2026-11-17",
+      "slot": "Afternoon",
+      "time": "14:00–17:00",
+      "venue": "Block A"
+    },
+    {
+      "id": "paper-nov-2026-bs-CSE-602",
+      "sessionId": "nov-2026-bs",
+      "courseCode": "CSE-602",
+      "date": "2026-11-19",
+      "slot": "Afternoon",
+      "time": "14:00–17:00",
+      "venue": "Block A"
+    },
+    {
+      "id": "paper-dec-2026-CSE-701",
+      "sessionId": "dec-2026",
+      "courseCode": "CSE-701",
+      "date": "2026-12-01",
+      "slot": "Morning",
+      "time": "09:30–12:30",
+      "venue": "Block A"
+    },
+    {
+      "id": "paper-dec-2026-CSE-702",
+      "sessionId": "dec-2026",
+      "courseCode": "CSE-702",
+      "date": "2026-12-03",
+      "slot": "Morning",
+      "time": "09:30–12:30",
+      "venue": "Block A"
+    },
+    {
+      "id": "paper-dec-2026-CSE-703",
+      "sessionId": "dec-2026",
+      "courseCode": "CSE-703",
+      "date": "2026-12-07",
+      "slot": "Morning",
+      "time": "09:30–12:30",
+      "venue": "Block A"
+    },
+    {
+      "id": "paper-dec-2026-CSE-704",
+      "sessionId": "dec-2026",
+      "courseCode": "CSE-704",
+      "date": "2026-12-10",
+      "slot": "Morning",
+      "time": "09:30–12:30",
+      "venue": "Block A"
+    },
+    {
+      "id": "paper-dec-2026-ECE-701",
+      "sessionId": "dec-2026",
+      "courseCode": "ECE-701",
+      "date": "2026-12-02",
+      "slot": "Afternoon",
+      "time": "14:00–17:00",
+      "venue": "Block C"
+    },
+    {
+      "id": "paper-dec-2026-ECE-702",
+      "sessionId": "dec-2026",
+      "courseCode": "ECE-702",
+      "date": "2026-12-04",
+      "slot": "Afternoon",
+      "time": "14:00–17:00",
+      "venue": "Block C"
+    },
+    {
+      "id": "paper-dec-2026-ECE-703",
+      "sessionId": "dec-2026",
+      "courseCode": "ECE-703",
+      "date": "2026-12-08",
+      "slot": "Afternoon",
+      "time": "14:00–17:00",
+      "venue": "Block C"
+    }
+  ],
+  "examRegistrations": [
+    {
+      "id": "reg-kartik-may-2026-CSE-601",
+      "studentId": "kartik",
+      "sessionId": "may-2026",
+      "courseCode": "CSE-601",
+      "room": "Room A1",
+      "seat": "1-11"
+    },
+    {
+      "id": "reg-kartik-may-2026-CSE-602",
+      "studentId": "kartik",
+      "sessionId": "may-2026",
+      "courseCode": "CSE-602",
+      "room": "Room A1",
+      "seat": "1-12"
+    },
+    {
+      "id": "reg-kartik-may-2026-CSE-603",
+      "studentId": "kartik",
+      "sessionId": "may-2026",
+      "courseCode": "CSE-603",
+      "room": "Room A1",
+      "seat": "1-13"
+    },
+    {
+      "id": "reg-kartik-may-2026-CSE-604",
+      "studentId": "kartik",
+      "sessionId": "may-2026",
+      "courseCode": "CSE-604",
+      "room": "Room A1",
+      "seat": "1-14"
+    },
+    {
+      "id": "reg-kartik-may-2026-CSE-605",
+      "studentId": "kartik",
+      "sessionId": "may-2026",
+      "courseCode": "CSE-605",
+      "room": "Room A1",
+      "seat": "1-15"
+    },
+    {
+      "id": "reg-kartik-oct-2026-summer-CSE-S11",
+      "studentId": "kartik",
+      "sessionId": "oct-2026-summer",
+      "courseCode": "CSE-S11",
+      "room": "Room B2",
+      "seat": "2-11"
+    },
+    {
+      "id": "reg-kartik-dec-2026-CSE-701",
+      "studentId": "kartik",
+      "sessionId": "dec-2026",
+      "courseCode": "CSE-701",
+      "room": "Room A1",
+      "seat": null
+    },
+    {
+      "id": "reg-kartik-dec-2026-CSE-702",
+      "studentId": "kartik",
+      "sessionId": "dec-2026",
+      "courseCode": "CSE-702",
+      "room": "Room A1",
+      "seat": null
+    },
+    {
+      "id": "reg-kartik-dec-2026-CSE-703",
+      "studentId": "kartik",
+      "sessionId": "dec-2026",
+      "courseCode": "CSE-703",
+      "room": "Room A1",
+      "seat": null
+    },
+    {
+      "id": "reg-kartik-dec-2026-CSE-704",
+      "studentId": "kartik",
+      "sessionId": "dec-2026",
+      "courseCode": "CSE-704",
+      "room": "Room A1",
+      "seat": null
+    }
+  ],
+  "examAttendance": [
+    {
+      "id": "examatt-kartik-may-2026-CSE-601",
+      "studentId": "kartik",
+      "sessionId": "may-2026",
+      "courseCode": "CSE-601",
+      "entry1": {
+        "status": "Present",
+        "by": "Rakesh Kumar",
+        "at": "2026-05-21T10:00:00Z"
+      },
+      "entry2": {
+        "status": "Present",
+        "by": "Priya Singh",
+        "at": "2026-05-21T15:00:00Z"
+      }
+    },
+    {
+      "id": "examatt-kartik-may-2026-CSE-602",
+      "studentId": "kartik",
+      "sessionId": "may-2026",
+      "courseCode": "CSE-602",
+      "entry1": {
+        "status": "Present",
+        "by": "Rakesh Kumar",
+        "at": "2026-05-21T10:00:00Z"
+      },
+      "entry2": {
+        "status": "Present",
+        "by": "Priya Singh",
+        "at": "2026-05-21T15:00:00Z"
+      }
+    },
+    {
+      "id": "examatt-kartik-may-2026-CSE-603",
+      "studentId": "kartik",
+      "sessionId": "may-2026",
+      "courseCode": "CSE-603",
+      "entry1": {
+        "status": "Present",
+        "by": "Rakesh Kumar",
+        "at": "2026-05-21T10:00:00Z"
+      },
+      "entry2": {
+        "status": "Present",
+        "by": "Priya Singh",
+        "at": "2026-05-21T15:00:00Z"
+      }
+    },
+    {
+      "id": "examatt-kartik-may-2026-CSE-604",
+      "studentId": "kartik",
+      "sessionId": "may-2026",
+      "courseCode": "CSE-604",
+      "entry1": {
+        "status": "Present",
+        "by": "Rakesh Kumar",
+        "at": "2026-05-21T10:00:00Z"
+      },
+      "entry2": {
+        "status": "Present",
+        "by": "Priya Singh",
+        "at": "2026-05-21T15:00:00Z"
+      }
+    },
+    {
+      "id": "examatt-kartik-may-2026-CSE-605",
+      "studentId": "kartik",
+      "sessionId": "may-2026",
+      "courseCode": "CSE-605",
+      "entry1": {
+        "status": "Present",
+        "by": "Rakesh Kumar",
+        "at": "2026-05-21T10:00:00Z"
+      },
+      "entry2": {
+        "status": "Present",
+        "by": "Priya Singh",
+        "at": "2026-05-21T15:00:00Z"
+      }
+    },
+    {
+      "id": "examatt-kartik-oct-2026-summer-CSE-S11",
+      "studentId": "kartik",
+      "sessionId": "oct-2026-summer",
+      "courseCode": "CSE-S11",
+      "entry1": {
+        "status": "Absent",
+        "by": "Rakesh Kumar",
+        "at": "2026-10-22T10:00:00Z"
+      },
+      "entry2": {
+        "status": "Absent",
+        "by": "Priya Singh",
+        "at": "2026-10-22T15:00:00Z"
+      }
+    }
+  ],
+  "examSheetScans": [],
+  "attendanceDisputes": [],
+  "ufmCases": [],
+  "rechecks": [
+    {
+      "id": "recheck-1",
+      "studentId": "kartik",
+      "service": "Rechecking",
+      "sessionId": "may-2026",
+      "subject": "Operating Systems",
+      "code": "CSE-601",
+      "requestDate": "2026-10-21",
+      "status": "Under review",
+      "remarks": "Answer script has been sent to the moderation desk.",
+      "expectedBy": "2026-11-04"
+    },
+    {
+      "id": "recheck-2",
+      "studentId": "kartik",
+      "service": "Revaluation",
+      "sessionId": "may-2026",
+      "subject": "Computer Networks",
+      "code": "CSE-603",
+      "requestDate": "2026-10-24",
+      "status": "Submitted",
+      "remarks": "Pay the fee to send this request for review.",
+      "expectedBy": "2026-11-07"
+    }
+  ],
+  "examApplications": [],
+  "examApplicationItems": [],
+  "withdrawals": [],
+  "charges": [
+    {
+      "id": "charge-kartik-tuition-1",
+      "studentId": "kartik",
+      "semester": 7,
+      "head": "Tuition",
+      "description": "Tuition 2026-27 – instalment 1",
+      "amount": 85000,
+      "concession": 0,
+      "dueDate": "2026-07-31",
+      "createdOn": "2026-07-01"
+    },
+    {
+      "id": "charge-kartik-tuition-2",
+      "studentId": "kartik",
+      "semester": 7,
+      "head": "Tuition",
+      "description": "Tuition 2026-27 – instalment 2",
+      "amount": 85000,
+      "concession": 17000,
+      "dueDate": "2027-01-15",
+      "createdOn": "2026-07-01"
+    },
+    {
+      "id": "charge-kartik-hostel",
+      "studentId": "kartik",
+      "semester": 7,
+      "head": "Hostel",
+      "description": "Hostel 2026-27 (Block H2)",
+      "amount": 60000,
+      "concession": 0,
+      "dueDate": "2026-10-20",
+      "createdOn": "2026-07-01"
+    },
+    {
+      "id": "charge-kartik-exam",
+      "studentId": "kartik",
+      "semester": 7,
+      "head": "Exam",
+      "description": "Exam fee – End-term Dec 2026",
+      "amount": 1200,
+      "concession": 0,
+      "dueDate": "2026-11-15",
+      "createdOn": "2026-10-15",
+      "ref": "dec-2026"
+    },
+    {
+      "id": "charge-kartik-library",
+      "studentId": "kartik",
+      "semester": 7,
+      "head": "Library",
+      "description": "Library & lab fee 2026-27",
+      "amount": 2000,
+      "concession": 0,
+      "dueDate": "2026-07-31",
+      "createdOn": "2026-07-01"
+    },
+    {
+      "id": "charge-kartik-recheck-1",
+      "studentId": "kartik",
+      "semester": 7,
+      "head": "Rechecking",
+      "description": "Rechecking – Operating Systems (End-term – May 2026)",
+      "amount": 500,
+      "concession": 0,
+      "dueDate": "2026-10-29",
+      "createdOn": "2026-10-21",
+      "ref": "recheck-1"
+    },
+    {
+      "id": "charge-kartik-recheck-2",
+      "studentId": "kartik",
+      "semester": 7,
+      "head": "Revaluation",
+      "description": "Revaluation – Computer Networks (End-term – May 2026)",
+      "amount": 1000,
+      "concession": 0,
+      "dueDate": "2026-10-29",
+      "createdOn": "2026-10-24",
+      "ref": "recheck-2"
+    }
+  ],
+  "payments": [
+    {
+      "id": "payment-kartik-t1a",
+      "studentId": "kartik",
+      "amount": 87000,
+      "method": "UPI",
+      "status": "Success",
+      "gatewayRef": "TEST-IK-T1A",
+      "receiptNo": "RCPT-2026-IK-T1A",
+      "createdOn": "2026-07-20T10:15:00Z",
+      "confirmedOn": "2026-07-20T10:15:30Z",
+      "allocations": [
+        {
+          "chargeId": "charge-kartik-tuition-1",
+          "amount": 85000
+        },
+        {
+          "chargeId": "charge-kartik-library",
+          "amount": 2000
+        }
+      ],
+      "idempotencyKey": "seed-payment-kartik-t1a"
+    },
+    {
+      "id": "payment-kartik-t1b",
+      "studentId": "kartik",
+      "amount": 85000,
+      "method": "Net banking",
+      "status": "Success",
+      "gatewayRef": "TEST-IK-T1B",
+      "receiptNo": "RCPT-2026-IK-T1B",
+      "createdOn": "2026-07-20T10:15:00Z",
+      "confirmedOn": "2026-07-20T10:15:30Z",
+      "allocations": [
+        {
+          "chargeId": "charge-kartik-tuition-1",
+          "amount": 85000
+        }
+      ],
+      "idempotencyKey": "seed-payment-kartik-t1b"
+    },
+    {
+      "id": "payment-kartik-hostel",
+      "studentId": "kartik",
+      "amount": 60000,
+      "method": "Card",
+      "status": "Pending",
+      "gatewayRef": "TEST-HOSTEL",
+      "receiptNo": null,
+      "createdOn": "2026-10-24T10:15:00Z",
+      "confirmedOn": null,
+      "allocations": [
+        {
+          "chargeId": "charge-kartik-hostel",
+          "amount": 60000
+        }
+      ],
+      "idempotencyKey": "seed-payment-kartik-hostel"
+    },
+    {
+      "id": "payment-kartik-exam",
+      "studentId": "kartik",
+      "amount": 1200,
+      "method": "UPI",
+      "status": "Success",
+      "gatewayRef": "TEST-K-EXAM",
+      "receiptNo": "RCPT-2026-K-EXAM",
+      "createdOn": "2026-10-18T10:15:00Z",
+      "confirmedOn": "2026-10-18T10:15:30Z",
+      "allocations": [
+        {
+          "chargeId": "charge-kartik-exam",
+          "amount": 1200
+        }
+      ],
+      "idempotencyKey": "seed-payment-kartik-exam"
+    },
+    {
+      "id": "payment-kartik-recheck-1",
+      "studentId": "kartik",
+      "amount": 500,
+      "method": "UPI",
+      "status": "Success",
+      "gatewayRef": "TEST-HECK-1",
+      "receiptNo": "RCPT-2026-HECK-1",
+      "createdOn": "2026-10-21T10:15:00Z",
+      "confirmedOn": "2026-10-21T10:15:30Z",
+      "allocations": [
+        {
+          "chargeId": "charge-kartik-recheck-1",
+          "amount": 500
+        }
+      ],
+      "idempotencyKey": "seed-payment-kartik-recheck-1"
+    }
+  ],
+  "settlements": [],
+  "scholarships": [
+    {
+      "id": "scholarship-kartik-merit",
+      "studentId": "kartik",
+      "name": "Chancellor’s merit scholarship (20% of tuition instalment 2)",
+      "portal": "University",
+      "amount": 17000,
+      "status": "Sanctioned",
+      "expectedOn": "2027-01-15"
+    }
+  ],
+  "tickets": [],
+  "mentorBookings": [
+    {
+      "id": "booking-kartik-1",
+      "studentId": "kartik",
+      "mentorId": "mentor-avinash",
+      "date": "2026-10-27",
+      "slot": "Tue 14:00",
+      "topic": "Elective choice for semester 8",
+      "status": "Requested"
+    }
+  ],
+  "mentorNotes": [],
+  "noDues": [
+    {
+      "id": "nodues-kartik-library",
+      "studentId": "kartik",
+      "office": "Library",
+      "status": "Cleared",
+      "remarks": "",
+      "clearedOn": "2026-10-10"
+    },
+    {
+      "id": "nodues-kartik-hostel",
+      "studentId": "kartik",
+      "office": "Hostel",
+      "status": "Pending",
+      "remarks": "Hostel fee payment is being confirmed.",
+      "clearedOn": null
+    },
+    {
+      "id": "nodues-kartik-accounts",
+      "studentId": "kartik",
+      "office": "Accounts",
+      "status": "Pending",
+      "remarks": "",
+      "clearedOn": null
+    },
+    {
+      "id": "nodues-kartik-department",
+      "studentId": "kartik",
+      "office": "Department",
+      "status": "Cleared",
+      "remarks": "",
+      "clearedOn": "2026-10-10"
+    },
+    {
+      "id": "nodues-kartik-placement-cell",
+      "studentId": "kartik",
+      "office": "Placement cell",
+      "status": "Pending",
+      "remarks": "",
+      "clearedOn": null
+    }
+  ],
+  "careerRecords": [
+    {
+      "id": "career-kartik-intern",
+      "studentId": "kartik",
+      "kind": "Internship",
+      "company": "Student Innovation Lab",
+      "role": "Frontend intern",
+      "from": "2026-06-01",
+      "to": "2026-07-31",
+      "file": {
+        "name": "internship-certificate.pdf",
+        "size": 120331,
+        "path": null
+      },
+      "verified": true
+    }
+  ],
+  "consents": [
+    {
+      "id": "consent-kartik",
+      "studentId": "kartik",
+      "privacyAcceptedOn": "2026-01-01",
+      "parentAccess": true,
+      "parentEmail": "parent@campus360.example",
+      "updatedOn": "2026-10-10"
+    }
+  ],
+  "companies": [
+    {
+      "id": "technova",
+      "name": "TechNova Systems",
+      "initials": "TN",
+      "sector": "Product engineering",
+      "location": "Bengaluru · India",
+      "website": "technova.example",
+      "description": "Builds developer tools and workflow software for fast-moving teams.",
+      "accent": "#4b5a8c"
+    },
+    {
+      "id": "orbit",
+      "name": "Orbit Labs",
+      "initials": "OL",
+      "sector": "Cloud & data",
+      "location": "Pune · Hybrid",
+      "website": "orbitlabs.example",
+      "description": "A cloud data platform helping operations teams turn messy signals into decisions.",
+      "accent": "#2e6b66"
+    },
+    {
+      "id": "northstar",
+      "name": "Northstar Finance",
+      "initials": "NF",
+      "sector": "Fintech",
+      "location": "Mumbai · India",
+      "website": "northstar.example",
+      "description": "A digital finance company focused on transparent, accessible financial products.",
+      "accent": "#94551d"
+    }
+  ],
+  "opportunities": [
+    {
+      "id": "opp-technova-frontend",
+      "companyId": "technova",
+      "title": "Frontend Engineer",
+      "location": "Bengaluru",
+      "workMode": "Hybrid",
+      "deadline": "2026-11-17",
+      "posted": "2026-10-04",
+      "minCgpa": 8,
+      "allowedBranches": [
+        "Computer Science & Engineering",
+        "Information Technology"
+      ],
+      "maxActiveBacklogs": 0,
+      "graduationYears": [
+        2027
+      ],
+      "requiredSkills": [
+        "React",
+        "TypeScript",
+        "HTML/CSS"
+      ],
+      "preferredSkills": [
+        "Testing",
+        "Git",
+        "Accessibility"
+      ],
+      "jobDescription": "Work with a product engineering team to build accessible, high-quality web experiences using React and TypeScript. You will partner with designers, write maintainable UI, and contribute to frontend testing and performance improvements.",
+      "package": "₹12–16 LPA",
+      "jobType": "Full-time",
+      "status": "Open",
+      "dream": true,
+      "criteriaVersion": 1
+    },
+    {
+      "id": "opp-orbit-data",
+      "companyId": "orbit",
+      "title": "Data Platform Intern",
+      "location": "Pune",
+      "workMode": "Hybrid",
+      "deadline": "2026-11-22",
+      "posted": "2026-10-06",
+      "minCgpa": 7.5,
+      "allowedBranches": [
+        "Computer Science & Engineering",
+        "Information Technology",
+        "Electronics & Communication Engineering"
+      ],
+      "maxActiveBacklogs": 1,
+      "graduationYears": [
+        2027,
+        2028
+      ],
+      "requiredSkills": [
+        "Python",
+        "SQL"
+      ],
+      "preferredSkills": [
+        "Data Analysis",
+        "Docker",
+        "AWS"
+      ],
+      "jobDescription": "Join the data platform team to prepare reliable datasets, build Python utilities, and query operational data with SQL. Curiosity, clear documentation, and a willingness to learn cloud tooling are valued.",
+      "package": "₹45k / month",
+      "jobType": "Internship + PPO",
+      "status": "Open",
+      "criteriaVersion": 2
+    },
+    {
+      "id": "opp-northstar-analyst",
+      "companyId": "northstar",
+      "title": "Associate Product Analyst",
+      "location": "Mumbai",
+      "workMode": "On-site",
+      "deadline": "2026-10-30",
+      "posted": "2026-10-01",
+      "minCgpa": 7.5,
+      "allowedBranches": [
+        "Computer Science & Engineering",
+        "Information Technology",
+        "Electronics & Communication Engineering",
+        "Electrical Engineering"
+      ],
+      "maxActiveBacklogs": 0,
+      "graduationYears": [
+        2027
+      ],
+      "requiredSkills": [
+        "SQL",
+        "Data Analysis",
+        "Communication"
+      ],
+      "preferredSkills": [
+        "Excel",
+        "A/B Testing",
+        "Product Thinking"
+      ],
+      "jobDescription": "Support product decisions with clear analysis, SQL-based reporting, and user research. The role works closely with product managers and engineering teams to turn customer questions into measurable experiments.",
+      "package": "₹9–12 LPA",
+      "jobType": "Full-time",
+      "status": "Closing soon",
+      "criteriaVersion": 1
+    }
+  ],
+  "applications": [
+    {
+      "id": "application-kartik-orbit",
+      "studentId": "kartik",
+      "opportunityId": "opp-orbit-data",
+      "stage": "Technical",
+      "appliedOn": "2026-10-06",
+      "note": "Technical round scheduled for 28 Oct.",
+      "criteria": {
+        "version": 1,
+        "minCgpa": 7,
+        "allowedBranches": [
+          "Computer Science & Engineering",
+          "Information Technology",
+          "Electronics & Communication Engineering"
+        ],
+        "maxActiveBacklogs": 1,
+        "graduationYears": [
+          2027,
+          2028
+        ]
+      },
+      "shared": [
+        "Resume",
+        "CGPA",
+        "Email"
+      ]
+    }
+  ],
+  "resumes": [
+    {
+      "id": "resume-kartik-product",
+      "studentId": "kartik",
+      "name": "Demo Student · Sample resume",
+      "updatedAt": "2026-10-07",
+      "text": "Demo Student\nComputer Science & Engineering | B.Tech | 2027\nstudent@campus360.example\n\nSKILLS\nReact, TypeScript, SQL, Git\n\nPROJECTS\nCampus service dashboard — built a sample interface to explore academic status and student support workflows."
+    }
+  ],
+  "audit": []
+}

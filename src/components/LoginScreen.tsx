@@ -31,10 +31,14 @@ const roleLabels: Record<Role, string> = { student: 'Student', parent: 'Parent',
 export function LoginScreen({
   accounts,
   pendingMfaSession,
+  demoMode,
+  publicDemoMode,
   onLogin,
 }: {
   accounts: Pick<AppData, 'students' | 'staff' | 'consents'>
   pendingMfaSession?: Session | null
+  demoMode: boolean
+  publicDemoMode: boolean
   onLogin: (session: Session) => void
 }) {
   const heroRef = useEnterAnimation<HTMLDivElement>('login', ':scope > *')
@@ -73,7 +77,8 @@ export function LoginScreen({
     let session: Session | null
     try {
       setBusy(true)
-      if (supabase) session = await signInRemote(email, password)
+      if (demoMode) session = (await import('../demoAuth')).signInLocal(email, password, accounts)
+      else if (supabase) session = await signInRemote(email, password)
       else if (import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEMO_MODE === 'true')
         session = (await import('../demoAuth')).signInLocal(email, password, accounts)
       else return setError('Sign-in is unavailable because the application is not configured.')
@@ -84,12 +89,12 @@ export function LoginScreen({
     }
     if (!session) return setError('Email or password is incorrect.')
     if (session.role !== role) {
-      await supabase?.auth.signOut()
+      if (!demoMode) await supabase?.auth.signOut()
       return setError(
         `This is a ${roleLabels[session.role].toLowerCase()} account. Use the ${roleLabels[session.role]} tab.`,
       )
     }
-    if (supabase && session.role === 'staff') {
+    if (supabase && !demoMode && session.role === 'staff') {
       try {
         const level = await mfaLevel()
         if (level.current !== 'aal2')
@@ -187,15 +192,33 @@ export function LoginScreen({
           <h2 className="font-display text-2xl font-semibold text-slate-950">Welcome back</h2>
           <p className="mt-1 text-sm text-slate-500">
             {role === 'student'
-              ? import.meta.env.PROD
+              ? publicDemoMode
+                ? 'Choose a public demo account to explore Campus360. Changes stay in this browser.'
+                : import.meta.env.PROD
                 ? 'Use the Campus360 account provided by university IT.'
                 : 'Sign in with your college account.'
               : role === 'parent'
-                ? import.meta.env.PROD
+                ? import.meta.env.PROD && !demoMode
                   ? 'Request a one-time sign-in link at the email address the student approved.'
                   : 'Parents can sign in when the student has turned on parent access.'
                 : 'Exam cell, accounts, placement, faculty and administration.'}
           </p>
+
+          {import.meta.env.PROD && !publicDemoMode && (
+            <a href="/?demo=1" className="mt-3 inline-block text-sm font-semibold text-brand-700 underline underline-offset-2">
+              Try the public demo
+            </a>
+          )}
+
+          {publicDemoMode && (
+            <div className="mt-4 rounded-xl border border-brand-200 bg-brand-50 p-3 text-xs leading-5 text-slate-700">
+              <p className="font-semibold text-brand-900">Public demo accounts</p>
+              <p className="mt-1">Student: student@campus360.example · DemoStudent!360</p>
+              <p>Parent: parent@campus360.example · DemoParent!360</p>
+              <p>Staff: staff@campus360.example · DemoStaff!360</p>
+              <p className="mt-1 text-slate-600">Synthetic sample data only. Changes are saved in this browser session, not the university database.</p>
+            </div>
+          )}
 
           <div
             className="mt-6 grid grid-cols-3 rounded-lg bg-slate-200/70 p-1"
@@ -273,7 +296,7 @@ export function LoginScreen({
               </button>
             </form>
           ) : (
-            role === 'parent' && import.meta.env.PROD ? (
+            role === 'parent' && import.meta.env.PROD && !demoMode ? (
               <form onSubmit={sendParentLink} className="mt-5 space-y-4" noValidate>
                 <div>
                   <label htmlFor="email" className="text-sm font-medium text-slate-700">Parent email</label>
@@ -295,7 +318,7 @@ export function LoginScreen({
               </form>
             ) : (
             <form onSubmit={submit} className="mt-5 space-y-4" noValidate>
-              {import.meta.env.PROD && (
+              {import.meta.env.PROD && !demoMode && (
                 <p className="text-sm leading-6 text-slate-600">
                   Sign in with the account provided by university IT. Staff accounts require an authenticator code.
                 </p>
@@ -314,7 +337,7 @@ export function LoginScreen({
                     setEmail(event.target.value)
                     setError('')
                   }}
-                  placeholder={import.meta.env.PROD ? 'University-issued email address' : role === 'parent' ? 'The email the student gave for parent access' : 'name@galgotiasuniversity.ac.in'}
+                  placeholder={publicDemoMode ? 'Demo account email' : import.meta.env.PROD ? 'University-issued email address' : role === 'parent' ? 'The email the student gave for parent access' : 'name@galgotiasuniversity.ac.in'}
                   className="form-input mt-1.5 bg-white"
                   aria-invalid={Boolean(error)}
                   aria-describedby={error ? 'signin-error' : undefined}
@@ -363,7 +386,7 @@ export function LoginScreen({
               >
                 {busy ? 'Signing in…' : 'Sign in'}
               </button>
-              {import.meta.env.PROD && role !== 'parent' && supabase && (
+              {import.meta.env.PROD && !demoMode && role !== 'parent' && supabase && (
                 <div className="pt-1 text-center">
                   <button
                     type="button"

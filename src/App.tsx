@@ -22,16 +22,18 @@ import { CampusContext, type Campus } from './store'
 import { supabase } from './supabase'
 import type { AppData, Payment, ResumeSample, UploadedFile, ViewKey } from './types'
 
-const demoMode = import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEMO_MODE === 'true'
+const publicDemoMode = new URLSearchParams(window.location.search).get('demo') === '1'
+const demoMode = publicDemoMode || (import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEMO_MODE === 'true')
 const STORAGE_KEY = 'campus360-data'
 const SESSION_KEY = 'campus360-session'
+const PUBLIC_DEMO_SESSION_KEY = 'campus360-public-demo-session'
 const ACTIVE_KEY = 'campus360-last-active'
-const remote = supabase !== null
+const remote = supabase !== null && !demoMode
 
 // Keeps the user signed in across reloads of this tab only.
-function loadSession(): Session | null {
+function loadSession(key = SESSION_KEY): Session | null {
   try {
-    const stored = JSON.parse(window.sessionStorage.getItem(SESSION_KEY) ?? 'null')
+    const stored = JSON.parse(window.sessionStorage.getItem(key) ?? 'null')
     return stored?.role === 'staff' ||
       stored?.role === 'parent' ||
       (stored?.role === 'student' && typeof stored.studentId === 'string')
@@ -77,7 +79,9 @@ export default function App() {
 function DemoVerify({ serial }: { serial: string }) {
   const [data, setData] = useState<AppData | null>(null)
   useEffect(() => {
-    if (import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEMO_MODE === 'true')
+    if (publicDemoMode)
+      void import('./publicDemoData').then(({ loadPublicDemoData }) => setData(loadPublicDemoData()))
+    else if (import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEMO_MODE === 'true')
       void import('./demoData').then(({ loadAppData }) => setData(loadAppData()))
   }, [])
   return data ? <Verify serial={serial} data={data} /> : <FullPageMessage title="Loading document record…" busy />
@@ -85,7 +89,9 @@ function DemoVerify({ serial }: { serial: string }) {
 
 function SignedInApp() {
   const [data, setData] = useState<AppData | null>(null)
-  const [session, setSession] = useState<Session | null>(() => (remote || !demoMode ? null : loadSession()))
+  const [session, setSession] = useState<Session | null>(() =>
+    publicDemoMode ? loadSession(PUBLIC_DEMO_SESSION_KEY) : remote || !demoMode ? null : loadSession(),
+  )
   const [pendingMfaSession, setPendingMfaSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
@@ -121,7 +127,12 @@ function SignedInApp() {
   }, [])
 
   useEffect(() => {
-    if (import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEMO_MODE === 'true')
+    if (publicDemoMode)
+      void import('./publicDemoData').then(({ loadPublicDemoData }) => {
+        setData(loadPublicDemoData())
+        setLoading(false)
+      })
+    else if (import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEMO_MODE === 'true')
       void import('./demoData').then(({ loadAppData }) => {
         setData(loadAppData())
         setLoading(false)
@@ -133,7 +144,9 @@ function SignedInApp() {
   }, [session, loadData])
 
   useEffect(() => {
-    if (demoMode && data) {
+    if (publicDemoMode && data) {
+      void import('./publicDemoData').then(({ savePublicDemoData }) => savePublicDemoData(data))
+    } else if (demoMode && data) {
       try {
         window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
       } catch {
@@ -144,8 +157,9 @@ function SignedInApp() {
 
   useEffect(() => {
     if (remote || !demoMode) return
-    if (session) window.sessionStorage.setItem(SESSION_KEY, JSON.stringify(session))
-    else window.sessionStorage.removeItem(SESSION_KEY)
+    const key = publicDemoMode ? PUBLIC_DEMO_SESSION_KEY : SESSION_KEY
+    if (session) window.sessionStorage.setItem(key, JSON.stringify(session))
+    else window.sessionStorage.removeItem(key)
   }, [session])
 
   const signOut = useCallback(() => {
@@ -274,6 +288,8 @@ function SignedInApp() {
       <LoginScreen
         accounts={data ?? { students: [], staff: [], consents: [] }}
         pendingMfaSession={pendingMfaSession}
+        demoMode={demoMode}
+        publicDemoMode={publicDemoMode}
         onLogin={(next) => {
           setPendingMfaSession(null)
           setSession(next)

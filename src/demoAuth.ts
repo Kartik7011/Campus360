@@ -15,12 +15,15 @@ export function signInLocal(email: string, password: string, data: Accounts): Se
   const id = email.trim().toLowerCase()
   const staff = data.staff.find((item) => item.email.toLowerCase() === id)
   if (staff)
-    return password === (staff.role === 'admin' ? 'Admin@360' : 'Staff@360')
+    return password === (id === 'staff@campus360.example' ? 'DemoStaff!360' : staff.role === 'admin' ? 'Admin@360' : 'Staff@360')
       ? { role: 'staff', staffId: staff.id, staffRole: staff.role }
       : null
   const student = data.students.find((item) => item.email.toLowerCase() === id)
-  if (student)
-    return studentPasswords[student.id] === password ? { role: 'student', studentId: student.id } : null
+  if (student) {
+    const expected = id === 'student@campus360.example' ? 'DemoStudent!360' : studentPasswords[student.id]
+    return expected === password ? { role: 'student', studentId: student.id } : null
+  }
   const consent = data.consents.find((item) => item.parentAccess && item.parentEmail.toLowerCase() === id)
-  return consent && password === 'Parent@360' ? { role: 'parent', studentId: consent.studentId } : null
+  const expected = id === 'parent@campus360.example' ? 'DemoParent!360' : 'Parent@360'
+  return consent && password === expected ? { role: 'parent', studentId: consent.studentId } : null
 }
