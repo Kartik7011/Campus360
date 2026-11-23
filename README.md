@@ -81,7 +81,7 @@ To run the local sample experience, copy `.env.example` to `.env.local`, leave t
 ### New project
 
 1. Create a Supabase project in the **Mumbai** region or the university-approved India region.
-2. In the SQL editor, run all seven files in `supabase/migrations/` in order. **Do not run `supabase/seed.sql` in a production project**; it contains synthetic student, staff, marks, fee and placement records.
+2. In the SQL editor, run all eight files in `supabase/migrations/` in order. **Do not run `supabase/seed.sql` in a production project**; it contains synthetic student, staff, marks, fee and placement records.
 3. Enable Supabase email/password authentication for university-provisioned student and staff accounts. Configure verified email, a 12-character minimum password, password reset redirects, rate limits, and university-controlled SMTP. Staff must complete TOTP MFA. Parents use a one-time email link and must be provisioned against an active consent record.
 4. Replace the sample `staff-admin` record with the university's actual IT administrator before provisioning auth accounts. Load reviewed university data through the institution's authorized process.
 5. Copy `.env.example` to `.env.local` for local development. Use only the project URL and **anon / publishable** key in the client build. Never put the service-role or secret key in the front end.
@@ -89,7 +89,7 @@ To run the local sample experience, copy `.env.example` to `.env.local`, leave t
 
 ### Upgrading a project set up with migrations 001–004
 
-Run `supabase/migrations/005_full_platform.sql`, `006_production_security.sql`, and `007_provisioned_password_auth.sql` in order. Never run the sample seed against production. Replace sample role rows with real staff records and provision student/staff identities and parent email links through the university's approved account process.
+Run `supabase/migrations/005_full_platform.sql` through `008_ticket_service_write_guard.sql` in order. Never run the sample seed against production. Replace sample role rows with real staff records and provision student/staff identities and parent email links through the university's approved account process.
 
 ### What the database enforces
 

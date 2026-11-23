@@ -46,6 +46,7 @@ beforeAll(async () => {
     '005_full_platform.sql',
     '006_production_security.sql',
     '007_provisioned_password_auth.sql',
+    '008_ticket_service_write_guard.sql',
   ])
     await db.exec(read(`migrations/${file}`))
   await db.exec(read('seed.sql'))
