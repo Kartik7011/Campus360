@@ -97,7 +97,7 @@ function Settlements() {
                     'fees',
                     `${item.kind} of ${rupees(item.amount)} approved`,
                     item.kind === 'Refund'
-                      ? 'The refund will be sent to your original payment method.'
+                      ? 'The refund decision has been recorded. The Accounts office will provide payment instructions.'
                       : 'The amount has been applied to your due fees.',
                   ),
                 ],
@@ -126,7 +126,7 @@ function Settlements() {
           </Button>
         </div>
       )
-    if (item.kind === 'Refund' && item.status === 'Approved')
+    if (item.kind === 'Refund' && item.status === 'Approved' && !import.meta.env.PROD)
       return (
         <Button
           size="sm"
@@ -150,7 +150,7 @@ function Settlements() {
           Send refund
         </Button>
       )
-    if (item.status === 'Sent')
+    if (item.status === 'Sent' && !import.meta.env.PROD)
       return (
         <Button
           size="sm"

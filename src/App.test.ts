@@ -1,4 +1,4 @@
-import { loadAppData, STORAGE_KEY } from './App'
+import { loadAppData, STORAGE_KEY } from './demoData'
 import { seedData } from './data'
 
 describe('loadAppData', () => {

@@ -7,6 +7,7 @@ import { faqs, policy } from '../policy'
 import { useAction, useStudent } from '../store'
 import type { Ticket, TicketCategory } from '../types'
 import { formatDate } from '../utils'
+import { UniversityResources } from '../components/UniversityResources'
 
 const categories: TicketCategory[] = ['Data correction', 'Fees', 'Exams', 'Placements', 'Other']
 
@@ -17,6 +18,7 @@ export function Help() {
     .sort((a, b) => b.createdOn.localeCompare(a.createdOn))
   return (
     <div className="space-y-6">
+      <UniversityResources />
       <NewTicket />
       <Card
         title="Your requests"

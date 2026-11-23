@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { BellRing, BriefcaseBusiness, Eye, EyeOff, GraduationCap } from 'lucide-react'
 import {
   mfaLevel,
-  signInLocal,
+  sendParentSignInLink,
   signInRemote,
   signInWithProvider,
   startMfaEnrolment,
@@ -14,6 +14,7 @@ import { supabase } from '../supabase'
 import type { AppData } from '../types'
 import { useEnterAnimation } from '../useEnterAnimation'
 import { Logo } from './Layout'
+import { university } from '../university'
 
 const highlights = [
   { icon: GraduationCap, title: 'Academic record', text: 'CGPA, backlogs, mentor and rechecking status' },
@@ -29,9 +30,11 @@ const roleLabels: Record<Role, string> = { student: 'Student', parent: 'Parent',
 
 export function LoginScreen({
   accounts,
+  pendingMfaSession,
   onLogin,
 }: {
   accounts: Pick<AppData, 'students' | 'staff' | 'consents'>
+  pendingMfaSession?: Session | null
   onLogin: (session: Session) => void
 }) {
   const heroRef = useEnterAnimation<HTMLDivElement>('login', ':scope > *')
@@ -41,6 +44,7 @@ export function LoginScreen({
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
+  const [linkSent, setLinkSent] = useState(false)
   const [busy, setBusy] = useState(false)
   // staff on the database must pass a second factor before the session counts (NFR-SEC-04)
   const [mfa, setMfa] = useState<{
@@ -49,12 +53,29 @@ export function LoginScreen({
   } | null>(null)
   const [code, setCode] = useState('')
 
+  useEffect(() => {
+    if (!pendingMfaSession || pendingMfaSession.role !== 'staff') return
+    let active = true
+    void mfaLevel()
+      .then(async (level) => {
+        if (!active) return
+        if (level.current === 'aal2') return onLogin(pendingMfaSession)
+        const enrol = level.next === 'aal2' ? undefined : await startMfaEnrolment()
+        if (active) setMfa({ session: pendingMfaSession, enrol })
+      })
+      .catch((reason: Error) => active && setError(reason.message))
+    return () => { active = false }
+  }, [pendingMfaSession])
+
   const submit = async (event: React.FormEvent) => {
     event.preventDefault()
     let session: Session | null
     try {
       setBusy(true)
-      session = supabase ? await signInRemote(email, password) : signInLocal(email, password, accounts)
+      if (supabase) session = await signInRemote(email, password)
+      else if (import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEMO_MODE === 'true')
+        session = (await import('../demoAuth')).signInLocal(email, password, accounts)
+      else return setError('Sign-in is unavailable because the application is not configured.')
     } catch {
       return setError('Could not reach the server. Check your connection and try again.')
     } finally {
@@ -77,6 +98,36 @@ export function LoginScreen({
       }
     }
     onLogin(session)
+  }
+
+  const sendParentLink = async (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!email.trim()) return
+    setBusy(true)
+    setError('')
+    setLinkSent(false)
+    try {
+      await sendParentSignInLink(email)
+      setLinkSent(true)
+    } catch {
+      // Keep the response the same for unknown addresses and temporary delivery failures.
+      setLinkSent(true)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const startProvider = async (provider: 'google' | 'azure') => {
+    setBusy(true)
+    setError('')
+    try {
+      const { error: failed } = await signInWithProvider(provider)
+      if (failed) setError(failed.message)
+    } catch {
+      setError('University sign-in could not be started. Try again or contact campus IT.')
+    } finally {
+      setBusy(false)
+    }
   }
 
   const submitCode = async (event: React.FormEvent) => {
@@ -106,7 +157,10 @@ export function LoginScreen({
         <div className="pointer-events-none absolute -right-32 -top-32 h-[28rem] w-[28rem] rounded-full bg-brand-500/30 blur-3xl" />
 
         <div className="relative flex h-full flex-col px-5 py-6 sm:px-10 sm:py-10 xl:px-16">
-          <Logo inverted />
+          <a href={university.website} target="_blank" rel="noopener noreferrer" className="w-fit rounded-sm" aria-label="Galgotias University official website">
+            <Logo inverted />
+          </a>
+          <p className="mt-3 text-xs font-medium tracking-wide text-brand-100">STUDENT SERVICES · GREATER NOIDA</p>
           <div ref={heroRef} className="flex flex-1 flex-col justify-center py-8 lg:py-12">
             <h1 className="max-w-xl font-display text-3xl font-semibold leading-tight sm:text-4xl xl:text-5xl">
               Your academic record and placement status, in one place.
@@ -130,9 +184,13 @@ export function LoginScreen({
               ))}
             </ul>
           </div>
-          <p className="hidden text-xs text-brand-200 lg:block">
-            Eligibility results are guidance only. Official decisions remain with the college placement cell.
-          </p>
+          <div className="hidden text-xs leading-5 text-brand-200 lg:block">
+            <p>Eligibility results are guidance only. Official decisions remain with the university placement office.</p>
+            <p className="mt-2 max-w-md">{university.campus}</p>
+            <a href={university.website} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block underline underline-offset-2">
+              Galgotias University website
+            </a>
+          </div>
         </div>
       </section>
 
@@ -141,9 +199,13 @@ export function LoginScreen({
           <h2 className="font-display text-2xl font-semibold text-slate-950">Welcome back</h2>
           <p className="mt-1 text-sm text-slate-500">
             {role === 'student'
-              ? 'Sign in with your college email and password.'
+              ? import.meta.env.PROD
+                ? 'Sign in with your university Google or Microsoft account.'
+                : 'Sign in with your college account.'
               : role === 'parent'
-                ? 'Parents can sign in when the student has turned on parent access.'
+                ? import.meta.env.PROD
+                  ? 'Request a one-time sign-in link at the email address the student approved.'
+                  : 'Parents can sign in when the student has turned on parent access.'
                 : 'Exam cell, accounts, placement, faculty and administration.'}
           </p>
 
@@ -224,6 +286,39 @@ export function LoginScreen({
               </button>
             </form>
           ) : (
+            role === 'parent' && import.meta.env.PROD ? (
+              <form onSubmit={sendParentLink} className="mt-5 space-y-4" noValidate>
+                <div>
+                  <label htmlFor="email" className="text-sm font-medium text-slate-700">Parent email</label>
+                  <input
+                    id="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    value={email}
+                    onChange={(event) => { setEmail(event.target.value); setLinkSent(false); setError('') }}
+                    placeholder="The email the student approved"
+                    className="form-input mt-1.5 bg-white"
+                  />
+                </div>
+                {linkSent && <p role="status" className="text-sm text-emerald-700">If this address has an active parent account, a sign-in link has been sent.</p>}
+                <button type="submit" disabled={!email.trim() || busy} className="h-11 w-full rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:from-slate-300 disabled:to-slate-300">
+                  {busy ? 'Sending…' : 'Email a sign-in link'}
+                </button>
+              </form>
+            ) : import.meta.env.PROD ? (
+              <div className="mt-5 space-y-4">
+                <p className="text-sm leading-6 text-slate-600">Use the university identity provider assigned to your account. Staff will complete authenticator verification after sign-in.</p>
+                {error && <p role="alert" className="text-sm font-medium text-rose-700">{error}</p>}
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {(['google', 'azure'] as const).map((provider) => (
+                    <button key={provider} type="button" disabled={!supabase || busy} onClick={() => void startProvider(provider)} className="h-11 rounded-xl bg-white text-sm font-semibold text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 disabled:opacity-50">
+                      {provider === 'google' ? 'Continue with Google' : 'Continue with Microsoft'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
             <form onSubmit={submit} className="mt-5 space-y-4" noValidate>
               <div>
                 <label htmlFor="email" className="text-sm font-medium text-slate-700">
@@ -294,7 +389,7 @@ export function LoginScreen({
               >
                 {busy ? 'Signing in…' : 'Sign in'}
               </button>
-              {supabase && role !== 'parent' && (
+              {supabase && (
                 <div className="grid gap-2 pt-1 sm:grid-cols-2">
                   {(
                     [
@@ -305,11 +400,8 @@ export function LoginScreen({
                     <button
                       key={provider}
                       type="button"
-                      onClick={() =>
-                        void signInWithProvider(provider).then(
-                          ({ error: failed }) => failed && setError(failed.message),
-                        )
-                      }
+                      disabled={busy}
+                      onClick={() => void startProvider(provider)}
                       className="h-11 rounded-xl bg-white text-sm font-semibold text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
                     >
                       {label}
@@ -318,11 +410,20 @@ export function LoginScreen({
                 </div>
               )}
             </form>
+            )
           )}
 
           <p className="mt-8 text-xs leading-5 text-slate-500 lg:hidden">
-            Eligibility results are guidance only. Official decisions remain with the college placement cell.
+            Eligibility results are guidance only. Official decisions remain with the university placement office.
           </p>
+          <div className="mt-6 border-t border-slate-200 pt-4 text-xs leading-5 text-slate-500">
+            <p>{university.name} · Greater Noida campus</p>
+            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+              <a href={university.website} target="_blank" rel="noopener noreferrer" className="text-brand-700 underline underline-offset-2">University website</a>
+              <a href={university.links.grievance} target="_blank" rel="noopener noreferrer" className="text-brand-700 underline underline-offset-2">Grievance support</a>
+              <a href={university.links.privacy} target="_blank" rel="noopener noreferrer" className="text-brand-700 underline underline-offset-2">Website privacy policy</a>
+            </div>
+          </div>
         </div>
       </section>
     </div>

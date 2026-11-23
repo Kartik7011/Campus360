@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { seedData } from './data'
+import type { Role } from './auth'
 import type { Op } from './ops'
 import { supabase } from './supabase'
 import type { AppData, AuditEntry, CollectionKey, Payment, ResumeAnalysis, UploadedFile } from './types'
@@ -88,19 +88,68 @@ async function run(query: PromiseLike<{ error: { message: string } | null }>) {
   if (error) throw new Error(error.message)
 }
 
-// Row-level security limits what comes back: a student gets only their own records.
-// shortcut: staff load every row they may see; at 40,000 students the staff views need server-side
-// paging and search before going live (NFR-PER-01).
-export async function loadRemoteData(): Promise<AppData> {
+const PAGE_SIZE = 1000
+const MAX_ROWS_PER_COLLECTION = 100_000
+
+async function allVisibleRows<T>(db: SupabaseClient, table: string): Promise<T[]> {
+  const result: T[] = []
+  for (let offset = 0; offset < MAX_ROWS_PER_COLLECTION; offset += PAGE_SIZE) {
+    const page = await rows<T>(db.from(table).select('*').order('id', { ascending: true }).range(offset, offset + PAGE_SIZE - 1))
+    result.push(...page)
+    if (page.length < PAGE_SIZE) return result
+  }
+  throw new Error(`The ${table} workspace exceeds the current ${MAX_ROWS_PER_COLLECTION.toLocaleString()} row loading limit.`)
+}
+
+// Row-level security limits what comes back: students get their permitted rows and offices get scoped queues.
+// Results are paged to avoid PostgREST's response limit, but staff screens still materialize the entire
+// authorized collection in browser memory. Collection-specific server search/paging is still required at scale.
+export async function loadRemoteData(role?: Role): Promise<AppData> {
   const db = client()
   const keys = Object.keys(TABLES) as CollectionKey[]
-  const loaded = await Promise.all(keys.map((key) => rows(db.from(TABLES[key]).select('*').limit(10_000))))
+  if (role === 'student') {
+    const [students, consents] = await Promise.all([
+      allVisibleRows<AppData['students'][number]>(db, TABLES.students),
+      allVisibleRows<AppData['consents'][number]>(db, TABLES.consents),
+    ])
+    const accepted = consents.some((consent) =>
+      students.some((student) => consent.studentId === student.id && Boolean(consent.privacyAcceptedOn)),
+    )
+    if (!accepted) {
+      return {
+        ...Object.fromEntries(keys.map((key) => [key, []])),
+        students,
+        consents,
+        version: 4,
+        audit: [],
+      } as unknown as AppData
+    }
+    const loaded = await Promise.all(
+      keys.filter((key) => key !== 'students' && key !== 'consents').map((key) => allVisibleRows(db, TABLES[key])),
+    )
+    let index = 0
+    return {
+      ...Object.fromEntries(keys.map((key) => [
+        key,
+        key === 'students' ? students : key === 'consents' ? consents : loaded[index++],
+      ])),
+      version: 4,
+      audit: [],
+    } as unknown as AppData
+  }
+  const loaded = await Promise.all(
+    keys.map((key) =>
+      key === 'students' && role === 'parent'
+        ? rows<unknown>(db.rpc('parent_student_summary'))
+        : allVisibleRows(db, TABLES[key]),
+    ),
+  )
   return {
     ...(Object.fromEntries(keys.map((key, index) => [key, loaded[index]])) as Omit<
       AppData,
       'version' | 'audit'
     >),
-    version: seedData.version,
+    version: 4,
     audit: [],
   }
 }
@@ -135,17 +184,33 @@ export const api = {
   },
 
   // private bucket, under the uploader's own folder (storage policies enforce that)
-  async upload(bucket: 'documents' | 'exam-sheets', file: File): Promise<UploadedFile> {
+  async upload(
+    purpose: 'exam-evidence' | 'placement-evidence' | 'exam-sheets',
+    file: File,
+    studentId?: string,
+  ): Promise<UploadedFile> {
     const db = client()
+    assertUpload(file, purpose === 'exam-sheets' ? ['pdf', 'jpg', 'jpeg', 'png'] : ['pdf', 'jpg', 'jpeg', 'png'])
     const { data } = await db.auth.getUser()
     if (!data.user) throw new Error('Your session has expired. Sign in again.')
-    const path = `${bucket === 'documents' ? data.user.id : 'sheets'}/${Date.now()}-${file.name}`
-    await run(db.storage.from(bucket).upload(path, file))
+    let bucket: 'documents' | 'exam-sheets'
+    let path: string
+    if (purpose === 'exam-sheets') {
+      bucket = 'exam-sheets'
+      path = `sheets/${crypto.randomUUID()}`
+    } else {
+      if (!studentId) throw new Error('The student record for this upload is missing.')
+      bucket = 'documents'
+      path = `${purpose}/${studentId}/${crypto.randomUUID()}`
+    }
+    await run(db.storage.from(bucket).upload(path, file, { contentType: uploadMime(file), upsert: false }))
     return { name: file.name, size: file.size, path: `${bucket}/${path}` }
   },
 
   async openFile(path: string) {
     const [bucket, ...rest] = path.split('/')
+    if (!['documents', 'exam-sheets', 'resumes'].includes(bucket) || !rest.length || rest.some((part) => part === '..'))
+      throw new Error('This file link is invalid.')
     const { data, error } = await client().storage.from(bucket).createSignedUrl(rest.join('/'), 60)
     if (error) throw new Error(error.message)
     window.open(data.signedUrl, '_blank', 'noopener')
@@ -156,10 +221,11 @@ export const api = {
     const db = client()
     let filePath: string | undefined
     if (file) {
+      assertUpload(file, ['pdf', 'docx', 'txt'], 2 * 1024 * 1024)
       const { data } = await db.auth.getUser()
       if (!data.user) throw new Error('Your session has expired. Sign in again.')
-      filePath = `${data.user.id}/${Date.now()}-${file.name}`
-      await run(db.storage.from('resumes').upload(filePath, file))
+      filePath = `${data.user.id}/${crypto.randomUUID()}`
+      await run(db.storage.from('resumes').upload(filePath, file, { contentType: uploadMime(file), upsert: false }))
     }
     await run(db.from('resumes').insert(toRow({ ...resume, filePath })))
   },
@@ -177,4 +243,24 @@ export const api = {
 
   loadAuditLog: () =>
     rows<AuditEntry>(client().from('audit_log').select('*').order('at', { ascending: false }).limit(200)),
+}
+
+function assertUpload(file: File, allowedExtensions: string[], maxBytes = 5 * 1024 * 1024) {
+  if (file.size <= 0) throw new Error('Choose a non-empty file.')
+  if (file.size > maxBytes)
+    throw new Error(`${file.name} is larger than ${maxBytes === 2 * 1024 * 1024 ? '2 MB' : '5 MB'}.`)
+  const extension = file.name.split('.').pop()?.toLowerCase() ?? ''
+  if (!allowedExtensions.includes(extension)) throw new Error(`.${extension || 'unknown'} files are not allowed here.`)
+}
+
+function uploadMime(file: File) {
+  const byExtension: Record<string, string> = {
+    pdf: 'application/pdf',
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    png: 'image/png',
+    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    txt: 'text/plain',
+  }
+  return byExtension[file.name.split('.').pop()?.toLowerCase() ?? ''] ?? file.type
 }

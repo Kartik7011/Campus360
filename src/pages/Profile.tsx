@@ -7,10 +7,10 @@ import { patch, today, uid, upsert } from '../ops'
 import { useAction, useStudent } from '../store'
 import type { AppData, CollectionKey, Consent } from '../types'
 
-// Personal-data notice shown at first sign-in (Digital Personal Data Protection Act, 2023).
+// Draft portal-specific notice shown at first sign-in. University privacy/legal owners must approve it before live records are enabled.
 const purposes: [string, string][] = [
   ['Academic record, results and attendance', 'to show you your standing and decide exam eligibility'],
-  ['Fees and payments', 'to show dues, take payments and issue receipts and refunds'],
+  ['Fee records', 'to show balances and account updates recorded by the Accounts office'],
   ['Exam applications and requests', 'to process rechecking, back/special exams, withdrawals and documents'],
   [
     'Placement profile and resumes',
@@ -22,7 +22,7 @@ const purposes: [string, string][] = [
 export function PrivacyNotice() {
   return (
     <div className="space-y-3 text-sm leading-6 text-slate-600">
-      <p>Campus360 uses your personal data only for these purposes:</p>
+      <p>This Campus360 project may process student information for these portal features:</p>
       <ul className="space-y-1">
         {purposes.map(([data, purpose]) => (
           <li key={data}>
@@ -31,10 +31,13 @@ export function PrivacyNotice() {
         ))}
       </ul>
       <p>
-        Data is stored in the university’s Campus360 database, kept for the periods in the university
-        retention schedule, and never sold. You can download a copy of your data from Profile & privacy at any
-        time. Questions or complaints go to the university’s grievance officer through Help & requests (topic:
-        Other).
+        Before real student records are used, the university must approve a portal-specific notice that explains
+        the data controller, service providers, retention period, student rights, and contact for privacy requests.
+        The university website’s published privacy policy covers its public website; it is not presented here as
+        the approved policy for this portal. You can review it at{' '}
+        <a className="font-medium text-brand-700 underline underline-offset-2" href="https://www.galgotiasuniversity.edu.in/p/privacy-policy" target="_blank" rel="noopener noreferrer">
+          Galgotias University Privacy Policy
+        </a>. Formal student grievances can also be sent through the university grievance portal linked from Help & requests.
       </p>
     </div>
   )
@@ -76,7 +79,7 @@ export function PrivacyConsent({ onSignOut }: { onSignOut: () => void }) {
         )}
         <div className="mt-6 flex flex-col gap-2 sm:flex-row">
           <Button onClick={accept} disabled={busy}>
-            <ShieldCheck size={16} /> I understand and agree
+            <ShieldCheck size={16} /> I have read this notice
           </Button>
           <Button tone="ghost" onClick={onSignOut}>
             Sign out

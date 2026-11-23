@@ -66,6 +66,8 @@ export function Fees() {
   )
 }
 
+const productionPaymentsDisabled = import.meta.env.PROD
+
 function ChargesCard({ charges }: { charges: FeeCharge[] }) {
   const { data, canAct, pay } = useStudent()
   const [selected, setSelected] = useState<string[]>([])
@@ -114,7 +116,7 @@ function ChargesCard({ charges }: { charges: FeeCharge[] }) {
             label: '',
             className: 'w-8',
             render: (row) =>
-              canAct && payable(row) ? (
+              canAct && !productionPaymentsDisabled && payable(row) ? (
                 <input
                   type="checkbox"
                   aria-label={`Pay ${row.description}`}
@@ -170,7 +172,7 @@ function ChargesCard({ charges }: { charges: FeeCharge[] }) {
           },
         ]}
       />
-      {canAct && (
+      {canAct && !productionPaymentsDisabled && (
         <div className="mt-5 flex flex-col gap-3 rounded-xl bg-slate-50 p-4 sm:flex-row sm:items-end sm:justify-between">
           <Field label="Pay with">
             <select
@@ -189,6 +191,11 @@ function ChargesCard({ charges }: { charges: FeeCharge[] }) {
             </Button>
             <span className="text-[11px] text-slate-500">Test payment gateway – no real money moves.</span>
           </div>
+        </div>
+      )}
+      {canAct && productionPaymentsDisabled && (
+        <div className="mt-5">
+          <Callout tone="info">Online payments are not enabled for this portal. Contact the Accounts office for the university-approved way to pay.</Callout>
         </div>
       )}
       {error && (

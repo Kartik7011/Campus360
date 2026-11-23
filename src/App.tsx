@@ -15,7 +15,6 @@ import { LoginScreen } from './components/LoginScreen'
 import { AppShell } from './components/Layout'
 import { restoreRemoteSession, type Session } from './auth'
 import { api, applyRemote, loadRemoteData } from './api'
-import { seedData } from './data'
 import { makePayment } from './domain/fees'
 import { applyOps, type Op } from './ops'
 import { policy } from './policy'
@@ -23,24 +22,11 @@ import { CampusContext, type Campus } from './store'
 import { supabase } from './supabase'
 import type { AppData, Payment, ResumeSample, UploadedFile, ViewKey } from './types'
 
-export const STORAGE_KEY = 'campus360-data'
+const demoMode = import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEMO_MODE === 'true'
+const STORAGE_KEY = 'campus360-data'
 const SESSION_KEY = 'campus360-session'
 const ACTIVE_KEY = 'campus360-last-active'
-// with a database configured, data and sign-in live on the server; otherwise in this browser
 const remote = supabase !== null
-
-export function loadAppData(): AppData {
-  try {
-    const stored = window.localStorage.getItem(STORAGE_KEY)
-    if (!stored) return seedData
-    const parsed = JSON.parse(stored) as AppData
-    if (parsed.version !== seedData.version || !parsed.students || !parsed.opportunities || !parsed.notices)
-      return seedData
-    return parsed
-  } catch {
-    return seedData
-  }
-}
 
 // Keeps the user signed in across reloads of this tab only.
 function loadSession(): Session | null {
@@ -70,13 +56,24 @@ export default function App() {
     window.addEventListener('hashchange', onHash)
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
-  return serial ? <Verify serial={serial} data={remote ? null : loadAppData()} /> : <SignedInApp />
+  if (!remote && !demoMode) return <ConfigurationRequired />
+  return serial ? (demoMode ? <DemoVerify serial={serial} /> : <Verify serial={serial} data={null} />) : <SignedInApp />
+}
+
+function DemoVerify({ serial }: { serial: string }) {
+  const [data, setData] = useState<AppData | null>(null)
+  useEffect(() => {
+    if (import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEMO_MODE === 'true')
+      void import('./demoData').then(({ loadAppData }) => setData(loadAppData()))
+  }, [])
+  return data ? <Verify serial={serial} data={data} /> : <FullPageMessage title="Loading document record…" busy />
 }
 
 function SignedInApp() {
-  const [data, setData] = useState<AppData | null>(() => (remote ? null : loadAppData()))
-  const [session, setSession] = useState<Session | null>(() => (remote ? null : loadSession()))
-  const [loading, setLoading] = useState(remote)
+  const [data, setData] = useState<AppData | null>(null)
+  const [session, setSession] = useState<Session | null>(() => (remote || !demoMode ? null : loadSession()))
+  const [pendingMfaSession, setPendingMfaSession] = useState<Session | null>(null)
+  const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
   const [saveError, setSaveError] = useState('')
   const [activeView, setActiveView] = useState<ViewKey>('dashboard')
@@ -86,18 +83,33 @@ function SignedInApp() {
     setLoading(true)
     setLoadError('')
     setSaveError('')
-    loadRemoteData()
+    loadRemoteData(session?.role)
       .then(setData)
       .catch((error: Error) => setLoadError(error.message))
       .finally(() => setLoading(false))
-  }, [])
+  }, [session?.role])
 
   useEffect(() => {
     if (!remote) return
     restoreRemoteSession()
-      .then((restored) => (restored ? setSession(restored) : setLoading(false)))
+      .then((restored) => {
+        if (restored?.needsMfa) {
+          setPendingMfaSession(restored.session)
+          setLoading(false)
+        }
+        else if (restored) setSession(restored.session)
+        else setLoading(false)
+      })
       .catch((error: Error) => {
         setLoadError(error.message)
+        setLoading(false)
+      })
+  }, [])
+
+  useEffect(() => {
+    if (import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEMO_MODE === 'true')
+      void import('./demoData').then(({ loadAppData }) => {
+        setData(loadAppData())
         setLoading(false)
       })
   }, [])
@@ -107,7 +119,7 @@ function SignedInApp() {
   }, [session, loadData])
 
   useEffect(() => {
-    if (!remote && data) {
+    if (demoMode && data) {
       try {
         window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
       } catch {
@@ -117,7 +129,7 @@ function SignedInApp() {
   }, [data])
 
   useEffect(() => {
-    if (remote) return
+    if (remote || !demoMode) return
     if (session) window.sessionStorage.setItem(SESSION_KEY, JSON.stringify(session))
     else window.sessionStorage.removeItem(SESSION_KEY)
   }, [session])
@@ -164,7 +176,7 @@ function SignedInApp() {
       staff
         ? { name: staff.name, email: staff.email }
         : student
-          ? { name: student.name, email: student.email }
+          ? { name: student.name, email: session?.role === 'parent' ? '' : student.email }
           : { name: '', email: '' },
     [staff, student],
   )
@@ -177,20 +189,25 @@ function SignedInApp() {
       if (!remote) return true
       try {
         await applyRemote(ops)
+        if (session?.role === 'student' && ops.some((op) => op.key === 'consents')) {
+          setData(await loadRemoteData(session.role))
+        }
         return true
       } catch (error) {
         setSaveError((error as Error).message)
-        loadRemoteData()
+        loadRemoteData(session?.role)
           .then(setData)
           .catch(() => undefined)
         return false
       }
     },
-    [actor],
+    [actor, session?.role],
   )
 
   const pay = useCallback(
     async (chargeIds: string[], method: Payment['method'], idempotencyKey: string) => {
+      if (import.meta.env.PROD)
+        throw new Error('Online payments are not enabled. Contact the Accounts office for the approved payment method.')
       if (!data || !student) return null
       if (!remote) {
         const result = makePayment({ studentId: student.id, chargeIds, method, idempotencyKey }, data)
@@ -206,12 +223,16 @@ function SignedInApp() {
   )
 
   const upload = useCallback(
-    async (file: File, bucket: 'documents' | 'exam-sheets' = 'documents'): Promise<UploadedFile> => {
+    async (
+      file: File,
+      purpose: 'exam-evidence' | 'placement-evidence' | 'exam-sheets' = 'exam-evidence',
+    ): Promise<UploadedFile> => {
       if (file.size > policy.maxUploadBytes) throw new Error(`${file.name} is larger than 5 MB.`)
       // browser-only mode keeps the file's name and size, not the file itself
-      return remote ? api.upload(bucket, file) : { name: file.name, size: file.size, path: null }
+      if (!remote) return { name: file.name, size: file.size, path: null }
+      return api.upload(purpose, file, student?.id)
     },
-    [],
+    [student],
   )
 
   const openFile = useCallback((file: UploadedFile) => {
@@ -237,8 +258,10 @@ function SignedInApp() {
   if (!session || !data || (session.role !== 'staff' && !student) || (session.role === 'staff' && !staff)) {
     return (
       <LoginScreen
-        accounts={data ?? seedData}
+        accounts={data ?? { students: [], staff: [], consents: [] }}
+        pendingMfaSession={pendingMfaSession}
         onLogin={(next) => {
+          setPendingMfaSession(null)
           setSession(next)
           setActiveView(next.role === 'staff' ? 'admin' : next.role === 'parent' ? 'results' : 'dashboard')
         }}
@@ -318,6 +341,7 @@ function SignedInApp() {
             resumes={data.resumes}
             initialOpportunityId={selectedOpportunityId}
             onSaveResume={addResume}
+            persisted={remote}
             onAnalyzed={
               remote
                 ? (opportunityId, analysis) =>
@@ -394,6 +418,20 @@ function SignedInApp() {
   )
 }
 
+function ConfigurationRequired() {
+  return (
+    <main className="grid min-h-dvh place-items-center bg-canvas p-6">
+      <section className="max-w-lg rounded-2xl border border-slate-200 bg-white p-8 shadow-card">
+        <h1 className="font-display text-2xl font-semibold text-slate-950">Campus360 needs configuration</h1>
+        <p className="mt-3 text-sm leading-6 text-slate-600">
+          This deployment has no university database configured. Ask the deployment administrator to set
+          VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY, then rebuild the app.
+        </p>
+      </section>
+    </main>
+  )
+}
+
 export const staffTitles: Record<string, string> = {
   admin: 'IT administrator',
   exam: 'Exam cell',
@@ -416,7 +454,7 @@ const initialsOf = (name: string) =>
 
 function allowedViews(session: Session, graduated: boolean): ViewKey[] {
   if (session.role === 'staff') return ['admin']
-  if (session.role === 'parent') return ['results', 'academic', 'exams', 'fees', 'notices']
+  if (session.role === 'parent') return ['results', 'exams', 'fees', 'notices']
   // graduates keep their documents and fee records (FR-DOC-07)
   if (graduated) return ['results', 'fees', 'help', 'profile']
   return [

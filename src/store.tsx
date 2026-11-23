@@ -17,7 +17,7 @@ export interface Campus {
   // applies a workflow's changes; resolves false (and shows the error) if the database refused them
   commit: (ops: Op[]) => Promise<boolean>
   pay: (chargeIds: string[], method: Payment['method'], idempotencyKey: string) => Promise<Payment | null>
-  upload: (file: File, bucket?: 'documents' | 'exam-sheets') => Promise<UploadedFile>
+  upload: (file: File, purpose?: 'exam-evidence' | 'placement-evidence' | 'exam-sheets') => Promise<UploadedFile>
   openFile: (file: UploadedFile) => void
   navigate: (view: ViewKey) => void
   loadAuditLog: () => Promise<AuditEntry[]>

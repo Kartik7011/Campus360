@@ -309,7 +309,7 @@ function CareerRecords() {
     if (!form.company.trim() || !form.role.trim() || !form.from || files.length !== 1)
       return setError('Fill in the company, role and start date, and attach one certificate or letter.')
     try {
-      const file = await upload(files[0])
+      const file = await upload(files[0], 'placement-evidence')
       await run(
         {
           ops: [

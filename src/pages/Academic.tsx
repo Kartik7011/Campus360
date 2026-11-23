@@ -147,7 +147,7 @@ function AttendanceCard() {
     if (!form.details.trim() || !form.files.length)
       return setError('Describe the reason and attach the supporting document.')
     try {
-      const files = await Promise.all(form.files.map((file) => upload(file)))
+      const files = await Promise.all(form.files.map((file) => upload(file, 'exam-evidence')))
       await run(
         {
           ops: [

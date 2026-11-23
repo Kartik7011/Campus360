@@ -1,4 +1,4 @@
-import { signInLocal as signIn } from './auth'
+import { signInLocal as signIn } from './demoAuth'
 import { seedData } from './data'
 
 describe('signInLocal', () => {

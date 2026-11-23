@@ -398,7 +398,7 @@ function ApplyCard({ session }: { session: ExamSession }) {
       | { missedSessionId?: string }
       | undefined
     try {
-      const uploaded = kind === 'Special' ? await Promise.all(files.map((file) => upload(file))) : []
+      const uploaded = kind === 'Special' ? await Promise.all(files.map((file) => upload(file, 'exam-evidence'))) : []
       const result = applyForExam(
         {
           student,

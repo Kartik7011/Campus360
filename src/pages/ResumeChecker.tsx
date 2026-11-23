@@ -27,6 +27,7 @@ export function ResumeChecker({
   initialOpportunityId,
   onSaveResume,
   onAnalyzed,
+  persisted,
 }: {
   student: Student
   companies: Company[]
@@ -35,6 +36,7 @@ export function ResumeChecker({
   initialOpportunityId?: string
   onSaveResume: (resume: ResumeSample, file: File) => void
   onAnalyzed?: (opportunityId: string, analysis: ResumeAnalysis) => void
+  persisted: boolean
 }) {
   const studentResumes = resumes.filter((resume) => resume.studentId === student.id)
   const defaultOpportunity =
@@ -244,6 +246,11 @@ export function ResumeChecker({
                 disabled={uploadStatus.busy}
               />
             </label>
+            <p className="mt-2 text-xs leading-5 text-slate-500">
+              {persisted
+                ? 'Your resume text and original file are stored in your private account. Placement staff can view the resume only when you choose to share it on an application.'
+                : 'In demo mode, extracted resume text is saved in this browser; the original file is not uploaded.'}
+            </p>
             {uploadStatus.error && (
               <p role="alert" className="mt-2 text-xs font-medium text-rose-700">
                 {uploadStatus.error}

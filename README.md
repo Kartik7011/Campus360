@@ -37,7 +37,9 @@ The full requirements are in [requirement.md](requirement.md); section 9 lists w
 
 Anyone can check a downloaded document at `/#/verify/<serial>` (the QR code links there); it shows live figures from the record, so an edited PDF won't match.
 
-## Sample accounts (browser-only mode)
+## Local demo accounts (development only)
+
+The sample accounts below are public demo credentials. They must never be used for a real deployment. Demo mode is disabled by default and can only run in the Vite development server.
 
 | Role | Email | Password |
 |---|---|---|
@@ -72,40 +74,44 @@ npm run dev
 
 Open the URL printed by Vite (usually `http://localhost:5173`). On Windows, if PowerShell blocks `npm` scripts, use `npm.cmd install` and `npm.cmd run dev`.
 
-Without a `.env.local` the app runs on the sample data, saved in the browser. To use the database, set up Supabase as below.
+To run the local sample experience, copy `.env.example` to `.env.local`, leave the Supabase settings blank, and set `VITE_ENABLE_DEMO_MODE=true`. Sample data is stored in this browser only. With the flag omitted or false, local development displays no demo workspace. A production app requires both Supabase settings and never permits browser-only demo authentication.
 
 ## Database (Supabase)
 
 ### New project
 
-1. Create a Supabase project (choose the **Mumbai** region to keep personal data in India).
-2. In the SQL editor, run the five files in `supabase/migrations/` in order, then `supabase/seed.sql`.
-3. Under Authentication → Users, add the accounts you need from the table above with passwords of your choice, ticking **Auto Confirm User**. Each account gets its role from its email when it is created.
-4. Copy `.env.example` to `.env.local` and fill in the project URL and the **anon / publishable** key. Never put the service-role or secret key in the front end.
-5. Restart `npm run dev` and sign in. Staff are asked to set up an authenticator app on first sign-in.
+1. Create a Supabase project in the **Mumbai** region or the university-approved India region.
+2. In the SQL editor, run all six files in `supabase/migrations/` in order. **Do not run `supabase/seed.sql` in a production project**; it contains synthetic student, staff, marks, fee and placement records.
+3. Configure the university Google/Microsoft OAuth tenant and allowed redirect URLs. Restrict OAuth to university-managed identities. Production student and staff sessions must use OAuth/SAML plus staff TOTP MFA. Parents use a one-time email link and must be provisioned against an active consent record. Password sessions are denied data access by production RLS.
+4. Replace the sample `staff-admin` record with the university's actual IT administrator before provisioning auth accounts. Load reviewed university data through the institution's authorized process.
+5. Copy `.env.example` to `.env.local` for local development. Use only the project URL and **anon / publishable** key in the client build. Never put the service-role or secret key in the front end.
+6. Apply the auth, database, storage and recovery settings in [production deployment](docs/production-deployment.md) before opening access to students.
 
 ### Upgrading a project set up with migrations 001–004
 
-Run `supabase/migrations/005_full_platform.sql`, then `supabase/seed.sql` again (it updates existing rows instead of duplicating them). Then add the new staff accounts in Authentication → Users. The existing admin account becomes the IT administrator and must set up two-step sign-in at its next sign-in.
+Run `supabase/migrations/005_full_platform.sql` and `006_production_security.sql` in order. Never run the sample seed against production. Replace sample role rows with real staff records and provision production identities with university SSO and parent email links.
 
 ### What the database enforces
 
 - **Row-level security**: students (and parents with consent) read only their own records; mentors read their mentees, HoDs their department, deans their school; university offices read everyone. Each office can write only its own tables.
 - **Staff need a second factor**: a staff session without MFA has no staff rights at all.
-- **Guards** the browser can't skip: one active exam application per subject per session; back exams only for failed subjects and only while applications are open; fees students raise must match `fee_rates`; payments only through `pay_charges()` (idempotent); disputes only within 7 days of a recorded absence; exam attendance keyed by two different people; refunds approved by someone other than their creator; placement applications only when every rule passes.
+- **Guards** the browser can't skip: one active exam application per subject per session; back exams only for failed subjects and only while applications are open; student-raised fees match `fee_rates`; payment simulation RPC is revoked in production; disputes only within 7 days of a recorded absence; exam attendance keyed by two different people; refunds approved by someone other than their creator; placement applications only when every rule passes.
 - **Audit log**: triggers record every insert, update and delete with who made it.
 
 To check the live policies from your machine:
 
 ```bash
-KARTIK_PASSWORD=... STAFF_EMAIL=exam.rakesh@galgotiasuniversity.ac.in STAFF_PASSWORD=... npm run check:rls
+KARTIK_ACCESS_TOKEN=... STAFF_EMAIL=exam.rakesh@galgotiasuniversity.ac.in STAFF_AAL1_ACCESS_TOKEN=... npm run check:rls
 ```
+
+Use short-lived OAuth tokens from a non-production project only. Never place real tokens in the repository or shell history.
 
 | Command | What it does |
 |---|---|
 | `npm run dev` | Start the dev server |
 | `npm test` | Run unit tests |
-| `npm run build` | Type-check and build for production |
+| `npm run build` | Type-check and build the frontend |
+| `docker build --build-arg VITE_SUPABASE_URL=… --build-arg VITE_SUPABASE_ANON_KEY=… -t campus360 .` | Build the production static container; both Supabase values are required |
 | `npm run preview` | Serve the production build |
 | `npm run seed:sql` | Regenerate `supabase/seed.sql` from `src/data.ts` |
 | `npm run check:rls` | Check row-level security on the Supabase project in `.env.local` |
@@ -120,23 +126,36 @@ src/
   policy.ts     University rules (fees, windows, thresholds) in one place
   ops.ts        Row changes a workflow returns, applied to state, the database and the audit log
   api.ts        Database reads and writes (Supabase)
-  auth.ts       Sign-in, SSO and MFA (or sample accounts without a database)
+  auth.ts       Sign-in, SSO and MFA
+  demoAuth.ts   Sample sign-in credentials for local development only
   pdf.ts        Grade sheets, receipts, hall tickets and certificates with QR verification
   data.ts       Sample records
 supabase/       Schema, row-level security, guards, audit triggers, seed data
 scripts/        Seed generator and row-level security check
 ```
 
-Workflows return the row changes they need instead of writing anywhere, so they are tested on their own (`src/domain/*.test.ts`) and the same code runs in browser-only and database modes.
+Workflows return the row changes they need instead of writing anywhere, so they are tested on their own (`src/domain/*.test.ts`) and the same code runs in browser demo and database modes.
 
 ## Current limitations
 
 - **Sample data, not the ERP.** Records are seeded, not synced from the university ERP; the exam cell's CSV import and record corrections stand in for it. Connecting the ERP's API is needed before real use.
-- **Test payment gateway.** `pay_charges()` records payments without moving money and "Send refund" generates the bank reference. A real gateway (webhook confirmation, refund API) must replace both before taking money.
+- **Payments are disabled in production.** The portal displays fee records but cannot initiate a payment or send a refund. The local demo payment simulation cannot be called through production RLS.
 - **In-app notifications only.** Email, SMS and push need the university's messaging providers.
-- **Not tuned for 40,000 students yet.** Staff screens load every row they may see; server-side paging and search are needed before full scale, followed by a load test.
-- **Google/Microsoft sign-in** works once the providers are enabled in the Supabase dashboard; email and password sign-in stays available.
-- **Hosting region.** The current Supabase project is in Seoul; the requirements ask for India (Mumbai).
-- **Not built:** Hindi, DigiLocker/APAAR integration, virus scanning of uploads, invigilator QR app, monitoring and alerting, a separate staging environment.
-- Browser-only mode keeps the names of uploaded files but not the files, and checks passwords in the browser. It is for trying the app with sample data only.
+- **Not tuned for 40,000 students yet.** Remote reads now page through responses rather than silently stopping at 10,000 rows, but authorized staff collections are still materialized in browser memory. Collection-specific server-side paging/search and load testing remain required before full scale.
+- **Google/Microsoft sign-in** must be configured for university tenants before production. Production students/staff cannot use passwords; parent access uses a provisioned one-time email link.
+- **Not built:** Hindi, DigiLocker/APAAR integration, malware scanning of uploads, invigilator QR app, monitoring and alerting, a separate staging environment.
+- Browser-only demo mode is explicitly opt-in in local development, keeps sample data in the browser and never stores original upload files. It is for trying the app with sample data only.
 - Meaning-based skill matching downloads a 23 MB model once; its 0.75 threshold still needs calibrating on labelled examples.
+
+## Production release gates
+
+The app fails closed to a configuration screen when Supabase is missing, production student/staff sign-in is university SSO only, parent sign-in uses an email link, and payment initiation is disabled. The repository contains no active university deployment configuration or production credentials, so an authorized university team still needs to complete these release gates:
+
+- Provision and review a production Supabase project in the approved India region; configure backups, recovery, retention, and production-only credentials.
+- Import institution-approved student and staff records securely before access opens. ERP integration is out of scope for this release; define a verified manual data refresh and correction process.
+- Add server-side pagination and search for staff workspaces, then run load tests at the university's expected peak size.
+- Configure server-enforced upload limits and malware scanning for private files.
+- Set up staging, monitoring, alerting, incident response, and an operational support owner.
+- Complete institution-led privacy, accessibility, security/VAPT, and disaster-recovery reviews; validate staff roles, MFA enrollment, and account lifecycle procedures.
+
+Do not use sample credentials or seed data for real users. `npm run build` verifies that the frontend compiles; it does not provision these services or certify the application for production.

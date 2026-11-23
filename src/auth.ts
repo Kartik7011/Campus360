@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { AppData, StaffRole } from './types'
+import type { StaffRole } from './types'
 
 export type Role = 'student' | 'parent' | 'staff'
 export type Session =
@@ -7,33 +7,13 @@ export type Session =
   | { role: 'parent'; studentId: string }
   | { role: 'staff'; staffId: string; staffRole: StaffRole }
 
-// shortcut: without a database (no .env.local) passwords are checked in the browser and kept in source,
-// so anyone with dev tools can get past this. Only sample data is used in that mode.
-const studentPasswords: Record<string, string> = {
-  kartik: 'Kartik@360',
-  shreyansh: 'Shreyansh@360',
-  aditi: 'Aditi@360',
-  rohan: 'Rohan@360',
-}
-const STAFF_PASSWORD = 'Staff@360'
-const ADMIN_PASSWORD = 'Admin@360'
-const PARENT_PASSWORD = 'Parent@360'
-
-type Accounts = Pick<AppData, 'students' | 'staff' | 'consents'>
-
-// Returns null when the email/password pair is wrong. A parent can sign in only while the student's consent is on.
-export function signInLocal(email: string, password: string, data: Accounts): Session | null {
-  const id = email.trim().toLowerCase()
-  const staff = data.staff.find((item) => item.email.toLowerCase() === id)
-  if (staff)
-    return password === (staff.role === 'admin' ? ADMIN_PASSWORD : STAFF_PASSWORD)
-      ? { role: 'staff', staffId: staff.id, staffRole: staff.role }
-      : null
-  const student = data.students.find((item) => item.email.toLowerCase() === id)
-  if (student)
-    return studentPasswords[student.id] === password ? { role: 'student', studentId: student.id } : null
-  const consent = data.consents.find((item) => item.parentAccess && item.parentEmail.toLowerCase() === id)
-  return consent && password === PARENT_PASSWORD ? { role: 'parent', studentId: consent.studentId } : null
+// Parents use a one-time sign-in link; their account must already have been provisioned from a consent.
+export async function sendParentSignInLink(email: string) {
+  const { error } = await supabase!.auth.signInWithOtp({
+    email: email.trim(),
+    options: { shouldCreateUser: false, emailRedirectTo: window.location.origin },
+  })
+  if (error) throw new Error(error.message)
 }
 
 // The role comes from the profiles table, which a user can read but not change.
@@ -45,13 +25,17 @@ async function sessionFromProfile(userId: string): Promise<Session | null> {
     .maybeSingle()
   if (error) throw new Error(error.message)
   if (!data) return null
-  if (data.role === 'student' || data.role === 'parent')
+  if ((data.role === 'student' || data.role === 'parent') && typeof data.student_id === 'string')
     return { role: data.role, studentId: data.student_id }
-  return { role: 'staff', staffId: data.staff_id, staffRole: data.role }
+  const staffRoles: StaffRole[] = ['admin', 'exam', 'accounts', 'placement', 'mentor', 'hod', 'dean', 'registrar']
+  if (staffRoles.includes(data.role) && typeof data.staff_id === 'string')
+    return { role: 'staff', staffId: data.staff_id, staffRole: data.role as StaffRole }
+  return null
 }
 
 // Returns null for wrong credentials or an account with no profile; throws when the server can't be reached.
 export async function signInRemote(email: string, password: string): Promise<Session | null> {
+  if (import.meta.env.PROD) throw new Error('Password sign-in is disabled in production.')
   const { data, error } = await supabase!.auth.signInWithPassword({ email: email.trim(), password })
   if (error) {
     if (error.status === 400) return null
@@ -70,12 +54,29 @@ export const signInWithProvider = (provider: 'google' | 'azure') =>
   })
 
 // Staff sessions count only after the second factor; until then they are not signed in.
-export async function restoreRemoteSession(): Promise<Session | null> {
+export async function restoreRemoteSession(): Promise<{ session: Session; needsMfa: boolean } | null> {
   const { data } = await supabase!.auth.getSession()
   if (!data.session) return null
   const session = await sessionFromProfile(data.session.user.id)
-  if (session?.role === 'staff' && (await mfaLevel()).current !== 'aal2') return null
-  return session
+  if (!session || !hasAllowedSignInMethod(data.session.access_token, session.role)) {
+    await supabase!.auth.signOut()
+    return null
+  }
+  const needsMfa = session.role === 'staff' && (await mfaLevel()).current !== 'aal2'
+  return { session, needsMfa }
+}
+
+function hasAllowedSignInMethod(accessToken: string, role: Role) {
+  try {
+    const encoded = accessToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+    const payload = JSON.parse(atob(encoded.padEnd(Math.ceil(encoded.length / 4) * 4, '=')))
+    const methods = Array.isArray(payload.amr) ? payload.amr.map((item: { method?: string }) => item.method) : []
+    return role === 'parent'
+      ? methods.some((method: string) => method === 'otp' || method === 'magiclink')
+      : methods.some((method: string) => method === 'oauth' || method === 'sso/saml')
+  } catch {
+    return false
+  }
 }
 
 export async function mfaLevel() {

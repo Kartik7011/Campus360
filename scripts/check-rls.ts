@@ -1,14 +1,12 @@
-// Checks row-level security on the live Supabase project in .env.local by signing in as sample accounts.
-// Run with: KARTIK_PASSWORD=... STAFF_EMAIL=... STAFF_PASSWORD=... npm run check:rls
-// Staff rights need a second factor, which a script can't supply, so the staff check confirms that a
-// password-only staff session sees nothing; the full staff checks run in supabase tests (see README).
+// Checks a non-production Supabase project using short-lived OAuth access tokens.
+// Run with: KARTIK_ACCESS_TOKEN=... STAFF_EMAIL=... STAFF_AAL1_ACCESS_TOKEN=... npm run check:rls
 import { createClient } from '@supabase/supabase-js'
 
 const url = import.meta.env.VITE_SUPABASE_URL
 const key = import.meta.env.VITE_SUPABASE_ANON_KEY
-const { KARTIK_PASSWORD, STAFF_EMAIL, STAFF_PASSWORD } = process.env
-if (!url || !key || !KARTIK_PASSWORD) {
-  console.error('Needs VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env.local, and KARTIK_PASSWORD.')
+const { KARTIK_ACCESS_TOKEN, STAFF_EMAIL, STAFF_AAL1_ACCESS_TOKEN } = process.env
+if (!url || !key || !KARTIK_ACCESS_TOKEN) {
+  console.error('Needs VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, and KARTIK_ACCESS_TOKEN.')
   process.exit(1)
 }
 
@@ -18,14 +16,17 @@ function check(label: string, ok: boolean, detail = '') {
   console.log(`${ok ? 'PASS' : 'FAIL'} ${label}${detail ? ` (${detail})` : ''}`)
 }
 
-async function signedIn(email: string, password: string) {
-  const db = createClient(url, key, { auth: { persistSession: false } })
-  const { error } = await db.auth.signInWithPassword({ email, password })
+async function signedIn(email: string, accessToken: string) {
+  const db = createClient(url, key, {
+    auth: { persistSession: false },
+    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+  })
+  const { error } = await db.auth.getUser(accessToken)
   if (error) throw new Error(`${email}: ${error.message}`)
   return db
 }
 
-const student = await signedIn('kartik.chauhan@galgotiasuniversity.ac.in', KARTIK_PASSWORD)
+const student = await signedIn('kartik.chauhan@galgotiasuniversity.ac.in', KARTIK_ACCESS_TOKEN)
 for (const [table, column] of [
   ['students', 'id'],
   ['applications', 'student_id'],
@@ -65,8 +66,8 @@ check('student cannot record a payment directly', !!payError)
 const { data: audit } = await student.from('audit_log').select('id')
 check('student cannot read the audit log', audit?.length === 0)
 
-if (STAFF_EMAIL && STAFF_PASSWORD) {
-  const staff = await signedIn(STAFF_EMAIL, STAFF_PASSWORD)
+if (STAFF_EMAIL && STAFF_AAL1_ACCESS_TOKEN) {
+  const staff = await signedIn(STAFF_EMAIL, STAFF_AAL1_ACCESS_TOKEN)
   const { data: rows } = await staff.from('students').select('id')
   check('staff without the second factor see no student records', rows?.length === 0, `${rows?.length} rows`)
 }

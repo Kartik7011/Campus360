@@ -28,8 +28,12 @@ beforeAll(async () => {
     create table auth.users (id uuid primary key, email text);
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
     create function auth.jwt() returns jsonb language sql stable as $$
-      select jsonb_build_object('email', current_setting('request.jwt.claim.email', true), 'aal', current_setting('request.jwt.claim.aal', true)) $$;
-    create table storage.buckets (id text primary key, name text, public boolean);
+      select jsonb_build_object(
+        'email', current_setting('request.jwt.claim.email', true),
+        'aal', current_setting('request.jwt.claim.aal', true),
+        'amr', coalesce(nullif(current_setting('request.jwt.claim.amr', true), ''), '[]')::jsonb
+      ) $$;
+    create table storage.buckets (id text primary key, name text, public boolean, file_size_limit bigint, allowed_mime_types text[]);
     create table storage.objects (id serial primary key, bucket_id text, name text);
     alter table storage.objects enable row level security;
     create function storage.foldername(name text) returns text[] language sql as $$ select string_to_array(name, '/') $$;
@@ -40,6 +44,7 @@ beforeAll(async () => {
     '003_audit.sql',
     '004_link_profiles.sql',
     '005_full_platform.sql',
+    '006_production_security.sql',
   ])
     await db.exec(read(`migrations/${file}`))
   await db.exec(read('seed.sql'))
@@ -59,10 +64,12 @@ afterAll(() => db.close())
 
 async function as<T>(user: User, fn: () => Promise<T>, aal = 'aal2'): Promise<T> {
   const [id, email] = user === 'anon' ? ['', ''] : users[user]
+  const method = user === 'parent' ? 'otp' : 'oauth'
   await db.exec(`reset role;
     select set_config('request.jwt.claim.sub', '${id}', false);
     select set_config('request.jwt.claim.email', '${email}', false);
     select set_config('request.jwt.claim.aal', '${aal}', false);
+    select set_config('request.jwt.claim.amr', '[{"method":"${method}"}]', false);
     set role ${user === 'anon' ? 'anon' : 'authenticated'};`)
   try {
     return await fn()
@@ -123,17 +130,7 @@ describe('database rules', () => {
       await db.query(
         "insert into fee_charges (id, student_id, semester, head, description, amount, due_date, created_on, ref) values ('c-ok', 'kartik', 7, 'Answer-sheet copy', 'copy', 300, current_date, current_date, 'rq-x')",
       )
-      const pay = (
-        await db.query<{ id: string; amount: number; allocations: unknown[] }>(
-          "select * from pay_charges(array['c-ok', 'charge-shreyansh-exam'], 'UPI', 'key-1')",
-        )
-      ).rows[0]
-      expect(pay.amount).toBe(300)
-      expect(pay.allocations).toHaveLength(1)
-      const again = (
-        await db.query<{ id: string }>("select * from pay_charges(array['c-ok'], 'UPI', 'key-1')")
-      ).rows[0]
-      expect(again.id).toBe(pay.id)
+      expect(await rejects("select * from pay_charges(array['c-ok', 'charge-shreyansh-exam'], 'UPI', 'key-1')")).toBe(true)
     })
   })
 
